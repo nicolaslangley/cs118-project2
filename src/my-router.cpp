@@ -25,6 +25,7 @@ Router::Router(int port, int buf_size) : buffer_size(buf_size), port(port)
     router_addr.sin_port = htons(port); // Set the port for the socket
 
     // Set global class variable with address info
+    // TODO: is this the correct address to send to?
     addr = router_addr.sin_addr.s_addr;
     printf("Address of router on port %d is: %lu\n", port, addr);
 
@@ -35,19 +36,22 @@ Router::Router(int port, int buf_size) : buffer_size(buf_size), port(port)
     }
 }
 
-void Router::send_message(unsigned long addr)
+void Router::send_message(unsigned long addr, int dest_port)
 {
     // TODO: host info may not be needed
     struct hostent* hp; // Host information
     struct sockaddr_in serv_addr; // Server address info
     memset((char*)&serv_addr, 0, sizeof(serv_addr)); // Fill serv_addr with 0s
     serv_addr.sin_family = AF_INET; // Set the address family
-    serv_addr.sin_port = htons(port); // Set the port for the socket
+    serv_addr.sin_port = htons(dest_port); // Set the port for the socket
+    // TODO: is this the correct way to get address length?
     int addr_length = sizeof(addr); // Get length of address - IPv4 should be 4 bytes
     memcpy((void*)&serv_addr.sin_addr.s_addr, &addr, addr_length); // Set target server address
 
+    printf("Target IP address is %lu on port %d\n", serv_addr.sin_addr.s_addr, dest_port);
+
     // This is the data to send
-    char* message = "Test Message";
+    char* message = "Test Message\n";
 
     // Send message to server
     int sendto_result = sendto(sock_fd, message, strlen(message), 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));

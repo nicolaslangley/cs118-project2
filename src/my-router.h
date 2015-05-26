@@ -15,7 +15,7 @@ class Router {
     Router(int port, int buf_size);
 
     // Send and receive UDP messages
-    void send_message(unsigned long addr);
+    void send_message(unsigned long addr, int port);
     void receive_message();
 
     // Handle incoming distance vectors
