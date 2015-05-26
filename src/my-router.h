@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 class Router {
    
     // Properties:
@@ -5,17 +7,20 @@ class Router {
     //  Local link state
     //  Connection details - port, etc..
   public:
-    int sock_fd;
-    int buffer_size;
-    int port;
-    // Address information
-    unsigned long addr;
+    int node_id; // ID for router
+    int sock_fd; // Socket file descriptor
+    int buffer_size; // Receive buffer size
+    int port; 
+    unsigned long addr; // IP address
+   
+    // Routing table for forwarding 
+    //std::map<int, int> routing_table;
 
     // Constructor: sets link costs according to topology
     Router(int port, int buf_size);
 
     // Send and receive UDP messages
-    void send_message(unsigned long addr, int port);
+    void send_message(unsigned long addr, int port, char* contents);
     void receive_message();
 
     // Handle incoming distance vectors

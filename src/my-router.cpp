@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 
 #include "my-router.h"
+#include "aodv_messages.h"
 
 // Constructor
 Router::Router(int port, int buf_size) : buffer_size(buf_size), port(port)
@@ -21,7 +22,7 @@ Router::Router(int port, int buf_size) : buffer_size(buf_size), port(port)
     struct sockaddr_in router_addr;
     memset((char*)&router_addr, 0, sizeof(router_addr)); // Fill router_addr with 0s
     router_addr.sin_family = AF_INET; // Set the address family
-    router_addr.sin_addr.s_addr = htonl(0x7f000001); // INADDR_ANY is the IP address
+    router_addr.sin_addr.s_addr = htonl(0x7f000001); // IP address is 127.0.0.1 (localhost)
     router_addr.sin_port = htons(port); // Set the port for the socket
 
     // Set global class variable with address info
@@ -36,7 +37,7 @@ Router::Router(int port, int buf_size) : buffer_size(buf_size), port(port)
     }
 }
 
-void Router::send_message(unsigned long addr, int dest_port)
+void Router::send_message(unsigned long addr, int dest_port, char* contents)
 {
     // TODO: host info may not be needed
     struct hostent* hp; // Host information
@@ -50,11 +51,8 @@ void Router::send_message(unsigned long addr, int dest_port)
 
     printf("Target IP address is %lu on port %d\n", serv_addr.sin_addr.s_addr, dest_port);
 
-    // This is the data to send
-    char* message = "Test Message\n";
-
-    // Send message to server
-    int sendto_result = sendto(sock_fd, message, strlen(message), 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    // Send contents to server
+    int sendto_result = sendto(sock_fd, contents, strlen(contents), 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (sendto_result < 0) {
         perror("Sending to server failed!");
     }
@@ -73,9 +71,13 @@ void Router::receive_message()
         receive_len = recvfrom(sock_fd, buffer, buffer_size, 0, (struct sockaddr*)&remote_addr, &addr_length);
         if (receive_len > 0) {
             buffer[receive_len] = 0;
-            printf("Received: %s", buffer);
+            printf("Received %d bytes\n", receive_len);
+            // TODO: parse the message contents to get AODV message type and data contents
+            AODVMessage* message = (AODVMessage*)buffer;
+            printf("AODVMessage type is: %d and destination IP is: %lu\n", message->type, message->destination_ip);
         }
     }
+
 }
 
 void Router::distance_vector_algorithm()

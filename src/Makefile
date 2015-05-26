@@ -1,12 +1,14 @@
 CC=cc
 CFLAGS=-I.
 TARGET=router-exec
+SOURCES=run-router.cpp my-router.cpp
+OBJECTS=$(SOURCES:.cpp=.o)
 LIBS=-lpthread -lstdc++
 
-all: $(TARGET)
+all: $(TARGET) $(SOURCES)
 
-$(TARGET): run-router.o my-router.o
-	$(CC) $(CFLAGS) -o $(TARGET) my-router.o run-router.o $(LIBS)
+$(TARGET): $(OBJECTS) 
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 clean:
-	$(RM) $(TARGET) my-router.o run-router.o
+	$(RM) $(TARGET) $(OBJECTS) 
