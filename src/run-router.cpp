@@ -7,13 +7,11 @@
 
 void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
 {
-    printf("Sending message to server at address %lu on port %d\n", dest_addr, dest_port);
-    AODVRequest* message = new AODVRequest(htonl(sender->addr), htonl(dest_addr));
-    const char* ser_message = message->serialize();
-    char* text_message = "test message";
-    printf("Message: %s\n", ser_message);
-    printf("Text Message: %d\n", strlen(text_message));
-    sender->send_message(dest_addr, dest_port, "Test Message");
+    printf("Sending message to server at address %lu on port %d\n", htonl(dest_addr), dest_port);
+    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr));
+    AODVResponse* res_message = new AODVResponse(htonl(sender->addr), htonl(dest_addr));
+    char* serialized_message = res_message->serialize();
+    sender->send_message(dest_addr, dest_port, serialized_message);
 }
 
 int main(int argc, char* argv[])
