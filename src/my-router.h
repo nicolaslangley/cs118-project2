@@ -19,6 +19,7 @@ class Router {
     // Send and receive AODV messages over UDP
     void send_message(unsigned long addr, int port, char* contents);
     void receive_message();
+    void send_aodv(unsigned long addr, int port, AODVMessage* message);
 
     // TODO: add functions for handling incoming RREQ or RREP messages 
     void handle_request(AODVRequest* req);

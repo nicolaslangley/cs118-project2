@@ -90,6 +90,15 @@ void Router::receive_message()
 
 }
 
+/****************************
+ * Simple wrapper around send_message() that takes AODVMessage instead of char* 
+ * **************************/
+void Router::send_aodv(unsigned long addr, int port, AODVMessage* message)
+{
+    char* serialized_message = message->serialize();
+    send_message(addr, port, serialized_message;
+}
+
 void Router::handle_request(AODVRequest* req)
 {
     // TODO: implement this function
