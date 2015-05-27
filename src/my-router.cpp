@@ -90,3 +90,14 @@ void Router::receive_message()
 
 }
 
+void Router::handle_request(AODVRequest* req)
+{
+    // TODO: implement this function
+}
+
+
+void Router::handle_response(AODVResponse* res)
+{
+    // TODO: implement this function
+}
+

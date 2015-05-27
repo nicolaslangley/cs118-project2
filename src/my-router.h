@@ -1,3 +1,5 @@
+#include "aodv_messages.h"
+
 /****************************
  * Simple router class for AODV implementation 
  * **************************/
@@ -19,4 +21,6 @@ class Router {
     void receive_message();
 
     // TODO: add functions for handling incoming RREQ or RREP messages 
+    void handle_request(AODVRequest* req);
+    void handle_response(AODVResponse* res);
 };
