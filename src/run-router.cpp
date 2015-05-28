@@ -3,7 +3,6 @@
 #include <cstring>
 #include <pthread.h>
 #include "my-router.h"
-#include "aodv_messages.h"
 
 void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
 {

@@ -1,13 +1,15 @@
 // Source file for router
 // Nicolas Langley 904433991
 #include <cstring>
+#include <fstream>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 #include "my-router.h"
-#include "aodv_messages.h"
+
+using namespace std;
 
 /****************************
  * Constructor sets port value and buffer size
@@ -75,7 +77,6 @@ void Router::receive_message()
     unsigned char buffer[buffer_size]; // Create the receive buffer
     int receive_len; // Number of bytes received
 
-    // TODO: how do we handle the looping of server? - multiple threads?
     // Listen on socket for incoming message
     for (;;) {
         printf("Waiting for message on port: %d\n", port);
@@ -84,11 +85,63 @@ void Router::receive_message()
             buffer[receive_len] = 0;
             printf("Received %d bytes\n", receive_len);
             printf("Text data received: %s\n", buffer);
+            char* message = (char*)(&buffer);
+            int message_type = buffer[0]; // TODO: this is not checked
             printf("AODV message type is: %c\n", buffer[0]);
+            if (message_type == 1) {
+                // Create a new AODV request message and load serialized data
+                AODVRequest* req_message = new AODVRequest();
+                req_message->deserialize(message);
+                handle_request(req_message);
+            } else if (message_type == 2) {
+                // Create a new AODV response message and load serialized data
+                AODVResponse* res_message = new AODVResponse();
+                res_message->deserialize(message);
+                handle_response(res_message);
+            } else {
+                // TODO: determine if message was an RERR or data
+            }
         }
     }
 
 }
+
+/****************************
+ * Simple wrapper around send_message() that takes AODVMessage instead of char* 
+ * **************************/
+void Router::send_aodv(unsigned long addr, int port, AODVMessage* message)
+{
+    char* serialized_message = message->serialize();
+    send_message(addr, port, serialized_message);
+}
+
+/****************************
+ * Simple wrapper around send_message() that loads a binary file 
+ * **************************/
+void Router::send_data(unsigned long addr, int port, char* filename)
+{
+    ifstream cur_file(filename, ios::in | ios::binary | ios::ate);
+
+    ifstream::pos_type filesize;
+    char* file_contents;
+
+    // Load the lines of the file    
+    if (cur_file.is_open()) {
+        filesize = cur_file.tellg();
+        file_contents = new char[filesize];
+        cur_file.seekg(0, ios::beg);
+        if (!cur_file.read(file_contents, filesize)) {
+            perror("Failed to read file");
+        }
+        cur_file.close();
+    } else {
+        perror("Error opening file");
+    }
+    
+    // Send data over UDP
+    send_message(addr, port, file_contents);
+}
+
 
 void Router::handle_request(AODVRequest* req)
 {
