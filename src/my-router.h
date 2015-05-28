@@ -1,4 +1,7 @@
 #include "aodv_messages.h"
+#include <map>
+
+using namespace std;
 
 /****************************
  * Simple router class for AODV implementation 
@@ -13,6 +16,38 @@ class Router {
     int port; 
     unsigned long addr; // IP address
 
+    struct tableEntryRouting{
+        int sequence;
+        unsigned long destination_ip;
+        unsigned long next_ip;
+        int hopCount;
+    };
+
+    struct tableEntryCache{
+        int sequence;
+        unsigned long destination_ip;
+        unsigned long source_ip;
+        int hopCount;
+
+    bool operator==(const tableEntryCache& a) const{
+        if(destination_ip == a.destination_ip && source_ip == a.source_ip)
+            return true;
+        else
+            return false;
+        }
+
+    int operator<(const tableEntryCache& a) const{
+        return destination_ip < a.destination_ip;
+        }
+
+    };
+
+
+
+// vector of tableEntries, check src and dest
+    map<unsigned long, tableEntry> reqCacheTable;
+    map<unsigned long, tableEntry> routingTable;
+
     // Constructor: sets link costs according to topology
     Router(int port, int buf_size);
 
@@ -23,4 +58,7 @@ class Router {
     // TODO: add functions for handling incoming RREQ or RREP messages 
     void handle_request(AODVRequest* req);
     void handle_response(AODVResponse* res);
+
+
+
 };

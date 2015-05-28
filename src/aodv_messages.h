@@ -36,7 +36,7 @@ class AODVRequest: public AODVMessage
     
     // Constructors
     AODVRequest(); // Default used when deserializing
-    AODVRequest(unsigned long orig_ip, unsigned long dest_ip);
+    AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip);
 
     // Serialization functions
     char* serialize();

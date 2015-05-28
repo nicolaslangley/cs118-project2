@@ -92,7 +92,63 @@ void Router::receive_message()
 
 void Router::handle_request(AODVRequest* req)
 {
-    // TODO: implement this function
+    //check cacheTable to see if message has already been handled
+    pair<unsigned long,unsigned long> incomingRequestKey = make_pair(req->originator_ip,req->destination_ip);
+
+    if(reqCacheTable.find(incomingRequestKey) == reqCacheTable.end()){ 
+        //Do nothing, we've already responded to this RREQ
+    } else {
+        // cache entry
+            tableEntryCache reqCacheEntry;
+
+            reqCacheEntry.destination = req->sender_ip;
+            reqCacheEntry.src = req->originator_ip;
+            reqCacheEntry.seq = req->originator_sequence_number;
+            reqCacheEntry.hop_count = req->hop_count;
+
+            cacheTable[incomingRequestKey]=reqCacheEntry;
+
+
+        // 1st routing table entry
+        if(routingTable.find(req->sender_ip) == routingTable.end())
+        {
+            tableEntryRouting previousNode;
+            
+            previousNode.destination = req->sender_ip;
+            previousNode.next_ip = req->sender_ip;
+            previousNode.seq = req->destination_sequence_num;
+            previousNode.hop_count = 1;
+
+            routingTable["req->sender_ip"] = previousNode;
+        }
+
+        // 2nd routing table entry
+        if(routingTable.find(req->originator_ip) == routingTable.end())
+        {
+            tableEntryRouting previousNodeCumulative;
+            
+            previousNodeCumulative.destination = req->originator_ip;
+            previousNodeCumulative.next_ip = req->sender_ip;
+            previousNodeCumulative.seq = req->destination_sequence_num;
+            previousNodeCumulative.hop_count = (req->hop_count)+1;        
+
+            routingTable["req->originator_ip"]=previousNodeCumulative;
+        }
+
+        //for(each neighbor in neighborlist){send AODVRequest()}
+        //AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip);
+        AODVRequest(req->originator_ip,req->destination_ip,req->hop_count,addr);
+
+        
+
+    }
+
+
+        // if not, add message to cacheTable (this is the RREQ data : seq,dest(final destination),src(originating source),hop )
+        // and check routing table to see if an entry already exists for the destination
+                //if not add previous hop entry  +  add total through previous hop entry
+    //when RREQ reaches destination it must turn around and issue the RREP, adding final destination and next hops to each nodes routingTable
+
 }
 
 
