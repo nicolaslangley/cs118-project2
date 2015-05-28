@@ -32,6 +32,8 @@ class AODVRequest: public AODVMessage
     unsigned long originator_ip;
     int originator_sequence_number;
     
+    unsigned long sender_ip;
+    
     // Constructors
     AODVRequest(); // Default used when deserializing
     AODVRequest(unsigned long orig_ip, unsigned long dest_ip);
@@ -57,6 +59,8 @@ class AODVResponse: public AODVMessage
     unsigned long originator_ip;
     int lifetime; // In Milliseconds
 
+    unsigned long sender_ip;
+    
     // Constructors
     AODVResponse(); // Default used when deserializing
     AODVResponse(unsigned long orig_ip, unsigned long dest_ip);
