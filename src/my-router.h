@@ -29,24 +29,21 @@ class Router {
         unsigned long source_ip;
         int hopCount;
 
-    bool operator==(const tableEntryCache& a) const{
-        if(destination_ip == a.destination_ip && source_ip == a.source_ip)
-            return true;
-        else
-            return false;
-        }
+    // bool operator==(const tableEntryCache& a) const{
+    //     if(destination_ip == a.destination_ip && source_ip == a.source_ip)
+    //         return true;
+    //     else
+    //         return false;
+    //     }
 
-    int operator<(const tableEntryCache& a) const{
-        return destination_ip < a.destination_ip;
-        }
+    // int operator<(const tableEntryCache& a) const{
+    //     return destination_ip < a.destination_ip;
+    //     }
 
     };
 
-
-
-// vector of tableEntries, check src and dest
-    map<unsigned long, tableEntry> reqCacheTable;
-    map<unsigned long, tableEntry> routingTable;
+    map< pair<unsigned long, unsigned long>, tableEntryCache> reqCacheTable;  //key is source_ip,destination_ip
+    map<unsigned long, tableEntryRouting> routingTable;
 
     // Constructor: sets link costs according to topology
     Router(int port, int buf_size);
