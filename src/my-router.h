@@ -6,7 +6,10 @@
 class Router {
   public:
     // Router properties
-    // TODO: add routing table and local link state
+    // TODO(Frank): add variables for local link state
+    //              set these in functions to be implemented below
+
+    // TODO(Michael): add routing table 
     int node_id; // ID for router
     int sock_fd; // Socket file descriptor
     int buffer_size; // Receive buffer size
@@ -19,9 +22,15 @@ class Router {
     // Send and receive AODV messages over UDP
     void send_message(unsigned long addr, int port, char* contents);
     void receive_message();
-    void send_aodv(unsigned long addr, int port, AODVMessage* message);
 
-    // TODO: add functions for handling incoming RREQ or RREP messages 
+    // Wrappers for sending aodv messages and data
+    void send_aodv(unsigned long addr, int port, AODVMessage* message);
+    void send_data(unsigned long addr, int port, char* filename);
+
+    // TODO(Frank): implement functions for loading and setting up topology
+    //              define whatever functions you want
+
+    // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
     void handle_request(AODVRequest* req);
     void handle_response(AODVResponse* res);
 };
