@@ -2,7 +2,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <pthread.h>
+#include <iostream>
+#include <ostream>
 #include "my-router.h"
+
+using namespace std;
 
 void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
 {
@@ -13,17 +17,45 @@ void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
     sender->send_message(dest_addr, dest_port, serialized_message);
 }
 
+void* run_receiver(void* threadarg)
+{
+    Router* receiver = (Router*)threadarg;
+    printf("Running receiver in thread...\n");
+    receiver->receive_message();
+}
+
 int main(int argc, char* argv[])
 {
+    pthread_t thread;
     if (strncmp(argv[1],"-r",2) == 0) {
         printf("Matched -r\n");
-        Router* receiver = new Router(5555, 2048);
-        receiver->receive_message();
+        // Create router
+        Router* receiver = new Router(5556, 2048);
+        // Run receive_message on new thread
+        int rc = pthread_create(&thread, NULL, run_receiver, (void*)receiver);
+        if (rc) {
+            perror("Unable to create thread\n");
+            exit(-1);
+        }
     } else if (strncmp(argv[1],"-s",2) == 0) {
         printf("Matched -s\n");
         Router* sender = new Router(4444, 2048);
         run_sender(sender, htonl(0x7f000001), 5555);
     } else {
         printf("Usage: -r for receiver or -s for sender\n");
+    }
+
+    // Loop menu
+    while (1) {
+        cout << "Enter command:" << endl;
+        char input;
+        cin >> input;
+        // Handle input
+        switch (input) {
+            case 'M': cout << "M pressed" << endl; 
+                      pthread_cancel(thread); // TODO: should I be calling this?
+                      break;
+            default: cout << "Invalid button" << endl;
+        }
     }
 }
