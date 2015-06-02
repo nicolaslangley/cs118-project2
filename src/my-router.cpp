@@ -152,7 +152,7 @@ void Router::handle_request(AODVRequest* req)
     //check cacheTable to see if message has already been handled
     pair<unsigned long,unsigned long> incomingRequestKey = make_pair(req->originator_ip,req->destination_ip);
 
-    if(reqCacheTable.find(incomingRequestKey) == reqCacheTable.end()){         
+    if(cacheTable.find(incomingRequestKey) == cacheTable.end()){         
         //Do nothing, we've already responded to this RREQ
     } else {
         // cache entry
@@ -223,7 +223,7 @@ void Router::handle_response(AODVResponse* res)
     //check cacheTable to see if message has already been handled
     pair<unsigned long,unsigned long> incomingResponseKey = make_pair(req->destination_ip,req->originator_ip);
 
-    if(reqCacheTable.find(incomingRequestKey) == reqCacheTable.end()){         
+    if(cacheTable.find(incomingRequestKey) == cacheTable.end()){         
         //Do nothing, we've already responded to this RREQ
     } else {
         // cache entry

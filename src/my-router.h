@@ -46,7 +46,7 @@ class Router {
 
     };
 
-    map< pair<unsigned long, unsigned long>, tableEntryCache> reqCacheTable;  //key is source_ip,destination_ip
+    map< pair<unsigned long, unsigned long>, tableEntryCache> cacheTable;  //key is source_ip,destination_ip
     map<unsigned long, tableEntryRouting> routingTable;
 
     // Constructor: sets link costs according to topology
