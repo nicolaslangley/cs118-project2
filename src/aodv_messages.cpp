@@ -23,13 +23,14 @@ AODVRequest::AODVRequest()
  * Use to construct a request at the source
  * TODO: add values to be added upon initial request construction
  * **************************/
-AODVRequest::AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num): originator_ip(orig_ip)
+AODVRequest::AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num, bool dest_rchd): originator_ip(orig_ip)
 {
     type = 1;
     reserved = 0;
     destination_ip = dest_ip;
     hop_count = hop_ct;
     sender_ip = send_ip;
+    destination_reached = dest_rchd;
 
 }
 
@@ -163,5 +164,12 @@ void AODVResponse::deserialize(char* ser_data)
     istringstream(values[6]) >> hop_count;
     istringstream(values[7]) >> originator_ip;
     istringstream(values[8]) >> lifetime;
+}
+
+bool timeElapsed(){
+
+    // clock_t start = clock (); 
+    // clock_t timeElapsed = ( clock() - start ) / CLOCKS_PER_SEC;
+    return true; 
 }
 

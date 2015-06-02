@@ -26,7 +26,6 @@ class Router {
     // TODO(Frank): add variables for local link state
     //              set these in functions to be implemented below
 
-    // TODO(Michael): add routing table 
     int node_id; // ID for router
     int sock_fd; // Socket file descriptor
     int buffer_size; // Receive buffer size
@@ -34,23 +33,12 @@ class Router {
     unsigned long addr; // IP address
     int routerSequenceNumber;
 
-    struct tableEntryCache{
+    struct tableEntryRouting{
         int sequence;
         unsigned long destination_ip;
-        unsigned long source_ip;
+        unsigned long next_ip;
         int hop_count;
-
-    // bool operator==(const tableEntryCache& a) const{
-    //     if(destination_ip == a.destination_ip && source_ip == a.source_ip)
-    //         return true;
-    //     else
-    //         return false;
-    //     }
-
-    // int operator<(const tableEntryCache& a) const{
-    //     return destination_ip < a.destination_ip;
-    //     }
-
+        bool isNeighbor;
     };
 
     map< pair<unsigned long, unsigned long>, tableEntryCache> cacheTable;  //key is source_ip,destination_ip
@@ -73,6 +61,8 @@ class Router {
     // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
     void handle_request(AODVRequest* req);
     void handle_response(AODVRequest* res);
+
+    void find_path(unsigned long dest);
 
 
 

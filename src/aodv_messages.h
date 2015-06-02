@@ -31,12 +31,15 @@ class AODVRequest: public AODVMessage
     int rreq_id;
     unsigned long originator_ip;
     int originator_sequence_number;
-    
+
+    bool destination_reached;
     unsigned long sender_ip;   //this can be derived from the source field of the header
-    
+
     // Constructors
     AODVRequest(); // Default used when deserializing
-    AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num);
+    AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num, bool dest_rchd);
+
+    bool timeElapsed();
 
     // Serialization functions
     char* serialize();
