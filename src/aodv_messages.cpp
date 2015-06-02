@@ -23,7 +23,7 @@ AODVRequest::AODVRequest()
  * Use to construct a request at the source
  * TODO: add values to be added upon initial request construction
  * **************************/
-AODVRequest::AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip): originator_ip(orig_ip)
+AODVRequest::AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num): originator_ip(orig_ip)
 {
     type = 1;
     reserved = 0;

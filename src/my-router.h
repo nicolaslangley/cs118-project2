@@ -24,14 +24,14 @@ class Router {
         int sequence;
         unsigned long destination_ip;
         unsigned long next_ip;
-        int hopCount;
+        int hop_count;
     };
 
     struct tableEntryCache{
         int sequence;
         unsigned long destination_ip;
         unsigned long source_ip;
-        int hopCount;
+        int hop_count;
 
     // bool operator==(const tableEntryCache& a) const{
     //     if(destination_ip == a.destination_ip && source_ip == a.source_ip)
@@ -65,7 +65,7 @@ class Router {
 
     // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
     void handle_request(AODVRequest* req);
-    void handle_response(AODVResponse* res);
+    void handle_response(AODVRequest* res);
 
 
 
