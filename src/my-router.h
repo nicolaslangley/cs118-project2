@@ -41,6 +41,7 @@ class Router {
         bool isNeighbor;
     };
 
+    // TODO: where is tableCacheEntry defined?
     map< pair<unsigned long, unsigned long>, tableEntryCache> cacheTable;  //key is source_ip,destination_ip
     map<unsigned long, tableEntryRouting> routingTable;
 
@@ -63,7 +64,5 @@ class Router {
     void handle_response(AODVRequest* res);
 
     void find_path(unsigned long dest, int port);
-
-
 
 };

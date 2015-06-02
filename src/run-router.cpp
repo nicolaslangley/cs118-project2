@@ -101,29 +101,29 @@ int main(int argc, char* argv[])
         switch (input) {
             // List the routers
             case 'L':{
-                      for (int i = 0; i < router_count; i++) {
-                        cout << "Router " << i << " on " << routers[i]->port << endl;  
-                      }
-                      break;
+                         for (int i = 0; i < router_count; i++) {
+                             cout << "Router " << i << " on " << routers[i]->port << endl;  
+                         }
+                         break;
                      }
-            // Send a message from source to destination router
+                     // Send a message from source to destination router
             case 'M':{
-                      cout << "Enter source router: " << endl;
-                      int sender;
-                      cin >> sender;
-                      cout << "Enter destination router: " << endl; 
-                      int receiver;
-                      cin >> receiver;
-                      // Stop the sender from listening
-                      pthread_cancel(&thread[sender]); // TODO: should I be calling this?
-                      int destination_port = routers[receiver]->port;
-                      unsigned long destination_addr = routers[receiver]->addr;
-                      routers[sender]->find_path(destination_addr, destination_port);
-                      break;
+                         cout << "Enter source router: " << endl;
+                         int sender;
+                         cin >> sender;
+                         cout << "Enter destination router: " << endl; 
+                         int receiver;
+                         cin >> receiver;
+                         // Stop the sender from listening
+                         pthread_cancel(&thread[sender]); // TODO: should I be calling this?
+                         int destination_port = routers[receiver]->port;
+                         unsigned long destination_addr = routers[receiver]->addr;
+                         routers[sender]->find_path(destination_addr, destination_port);
+                         break;
                      }
             default:{
-                     cout << "Invalid usage!" << endl;
-                     cout << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
+                        cout << "Invalid usage!" << endl;
+                        cout << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
                     }
         }
     }

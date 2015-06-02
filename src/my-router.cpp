@@ -7,8 +7,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-
-
 #include "my-router.h"
 
 using namespace std;
@@ -86,7 +84,6 @@ void Router::send_message(unsigned long addr, int dest_port, char* contents)
     memset((char*)&serv_addr, 0, sizeof(serv_addr)); // Fill serv_addr with 0s
     serv_addr.sin_family = AF_INET; // Set the address family
     serv_addr.sin_port = htons(dest_port); // Set the port for the socket
-    // TODO: is this the correct way to get address length?
     int addr_length = sizeof(addr); // Get length of address - IPv4 should be 4 bytes
     memcpy((void*)&serv_addr.sin_addr.s_addr, &addr, addr_length); // Set target server address
 
@@ -177,6 +174,10 @@ void Router::send_data(unsigned long addr, int port, char* filename)
     send_message(addr, port, file_contents);
 }
 
+void Router::find_path(unsigned long dest, int port)
+{
+    // TODO(Michael): create AODV message and send it to neighbours
+}
 
 void Router::handle_request(AODVRequest* req)
 {
