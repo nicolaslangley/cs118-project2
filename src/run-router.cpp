@@ -55,6 +55,25 @@ void* run_receiver(void* threadarg)
 
 int main(int argc, char* argv[])
 {
+    if (argc != 2) {
+        cerr << "Incorrect usage!" << endl;
+        exit(-1);
+    }
+    string topology_fname(argv[1]);
+    // load_topology()
+    // TODO: create routers 
+    int router_count = 1;
+    // Router* routers[router_count];
+    pthread_t threads[router_count];
+    for (int i = 0; i < router_count; i++) {
+        // For each router set it to listen in a new thread
+        Router* receiver = routers[i];
+        int rc = pthread_create(&thread, NULL, run_receiver, (void*)receiver);
+        if (rc) {
+            perror("Unable to create thread\n");
+            exit(-1);
+        }
+    }
     pthread_t thread;
     if (strncmp(argv[1],"-r",2) == 0) {
         printf("Matched -r\n");
@@ -77,14 +96,30 @@ int main(int argc, char* argv[])
     // Loop menu
     while (1) {
         cout << "Enter command:" << endl;
+        cout << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl 
         char input;
         cin >> input;
         // Handle input
         switch (input) {
-            case 'M': cout << "M pressed" << endl; 
-                      pthread_cancel(thread); // TODO: should I be calling this?
+            // List the routers
+            case 'L': for (int i = 0; i < router_count; i++) {
+                        cout << "Router " << i << " on " << routers[i]->port << endl;  
+                      }
+            // Send a message from source to destination router
+            case 'M': cout << "Enter source router: " << endl;
+                      int sender;
+                      cin >> sender;
+                      cout << "Enter destination router: " << endl; 
+                      int receiver;
+                      cin >> receiver;
+                      // Stop the sender from listening
+                      pthread_cancel(thread[sender]); // TODO: should I be calling this?
+                      int destination_port = routers[receiver]->port;
+                      unsigned long destination_addr = routers[receiver]->addr
+                      routers[sender]->find_path(destination_addr, destination_port);
                       break;
-            default: cout << "Invalid button" << endl;
+            default: cout << "Invalid usage!" << endl;
+                     cout << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl 
         }
     }
 }
