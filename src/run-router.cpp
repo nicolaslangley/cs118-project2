@@ -17,6 +17,35 @@ void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
     sender->send_message(dest_addr, dest_port, serialized_message);
 }
 
+void load_topology(string filename)
+{
+
+    //Node Topology: 
+    node_id = port-9935;   //results in A->F 
+    std::string tuple;  
+    std::vector<std::string> topology; 
+    std::ifstream tfile("topology.txt");
+    int cnt = 0;
+    if(tfile.is_open()) {
+        while(getline(tfile, tuple)) {
+            topology.push_back(tuple); 
+            cnt++;
+        }
+        tfile.close();  		
+    }
+    else {
+        fprintf(stderr, "Could not open file 'topology.txt'");
+        exit(EXIT_FAILURE); 
+    }
+    for (int i = 0; i < cnt; i++) {
+        if ((int)topology[i][0] == node_id) {
+            tableEntryRouting entry = delimitTopology(topology[i]);
+            routingTable.insert(std::pair<int, tableEntryRouting>(addr, entry));	
+            printf("%c: Dest_ip: %lu Next_ip: %lu Hop_count: %d \n", node_id, entry.destination_ip, entry.next_ip, entry.hop_count);
+        }	
+    }
+}
+
 void* run_receiver(void* threadarg)
 {
     Router* receiver = (Router*)threadarg;
