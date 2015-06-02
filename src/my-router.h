@@ -62,7 +62,7 @@ class Router {
     void handle_request(AODVRequest* req);
     void handle_response(AODVRequest* res);
 
-    void find_path(unsigned long dest);
+    void find_path(unsigned long dest, int port);
 
 
 
