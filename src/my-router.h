@@ -1,7 +1,21 @@
 #include "aodv_messages.h"
 #include <map>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <iostream> 
+#include <fstream>
+#include <string>
+#include <vector>
 
 using namespace std;
+
+struct tableEntryRouting{
+	int sequence;
+	unsigned long destination_ip;
+	unsigned long next_ip;
+	int hop_count;
+};
 
 /****************************
  * Simple router class for AODV implementation 
@@ -19,13 +33,6 @@ class Router {
     int port; 
     unsigned long addr; // IP address
     int routerSequenceNumber;
-
-    struct tableEntryRouting{
-        int sequence;
-        unsigned long destination_ip;
-        unsigned long next_ip;
-        int hop_count;
-    };
 
     struct tableEntryCache{
         int sequence;
@@ -62,7 +69,7 @@ class Router {
 
     // TODO(Frank): implement functions for loading and setting up topology
     //              define whatever functions you want
-
+	tableEntryRouting delimitTopology(std::string str);	
     // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
     void handle_request(AODVRequest* req);
     void handle_response(AODVRequest* res);
