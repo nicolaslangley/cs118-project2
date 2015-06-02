@@ -7,6 +7,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+
+
 #include "my-router.h"
 
 using namespace std;
@@ -41,7 +43,60 @@ Router::Router(int port, int buf_size) : buffer_size(buf_size), port(port)
     if (bind_result < 0) {
         perror("Bind failed!");
     }
+	
+	//Node Topology: 
+    node_id = port-9935;   //results in A->F 
+    std::string tuple;  
+	std::vector<std::string> topology; 
+	std::ifstream tfile("topology.txt");
+	int cnt = 0;
+	if(tfile.is_open()) {
+		while(getline(tfile, tuple)) {
+			topology.push_back(tuple); 
+			cnt++;
+		}
+		tfile.close();  		
+	}
+	else {
+		fprintf(stderr, "Could not open file 'topology.txt'");
+		exit(EXIT_FAILURE); 
+	}
+	for (int i = 0; i < cnt; i++) {
+		if ((int)topology[i][0] == node_id) {
+			tableEntryRouting entry = delimitTopology(topology[i]); 			routingTable.insert(std::pair<int, tableEntryRouting>(addr, entry));	
+			printf("%c: Dest_ip: %lu Next_ip: %lu Hop_count: %d \n", node_id, entry.destination_ip, entry.next_ip, entry.hop_count);
+		}	
+	}
 }
+
+tableEntryRouting Router::delimitTopology(std::string str)
+{
+	int itr = 0;
+	std::string dest = "";
+	int dest_port;
+	int linkCost; 
+	dest.append(str, 4, 5);  //where the dest_port starts/ends in topology
+	char const* cstr = dest.c_str(); 
+	dest_port = atoi(cstr);      //convert string to int
+ 	
+	linkCost = str[10] - '0'; 
+	//if the process of obtaining ip address is completed in send_message anyway, 
+		//should the routing table just have ports? 
+	struct sockaddr_in serv_addr;  //server address info 
+	memset((char*)&serv_addr, 0, sizeof(serv_addr)); 
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(dest_port);
+	int addr_length = sizeof(addr_length);
+	memcpy((void*)&serv_addr.sin_addr.s_addr, &serv_addr, addr_length);
+	
+	tableEntryRouting entry;
+	entry.sequence = 0;
+	entry.hop_count = linkCost; 
+	entry.destination_ip = serv_addr.sin_addr.s_addr;
+	entry.next_ip = serv_addr.sin_addr.s_addr;
+	return entry; 
+}
+
 
 /****************************
  * Sends char* message to given address and port using UDP 
