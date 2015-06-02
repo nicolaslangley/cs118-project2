@@ -71,9 +71,9 @@ void AODVRequest::deserialize(char* ser_data)
     istringstream ss(ser_data);
     while (!ss.eof())       
     {
-      string x; 
-      getline(ss, x, ','); 
-      values.push_back(x);
+        string x; 
+        getline(ss, x, ','); 
+        values.push_back(x);
     }
     // Write values into message fields
     istringstream(values[0]) >> type;
@@ -150,9 +150,9 @@ void AODVResponse::deserialize(char* ser_data)
     istringstream ss(ser_data);
     while (!ss.eof())       
     {
-      string x; 
-      getline(ss, x, ','); 
-      values.push_back(x);
+        string x; 
+        getline(ss, x, ','); 
+        values.push_back(x);
     }
     // Write values into message fields
     istringstream(values[0]) >> type;
