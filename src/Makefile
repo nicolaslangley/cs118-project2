@@ -1,6 +1,6 @@
 CC=cc
 CFLAGS=-I.
-TARGET=router-exec
+TARGET=router.exe
 SOURCES=run-router.cpp my-router.cpp aodv_messages.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 LIBS=-lpthread -lstdc++
