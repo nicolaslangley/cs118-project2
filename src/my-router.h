@@ -18,6 +18,7 @@ class Router {
     int buffer_size; // Receive buffer size
     int port; 
     unsigned long addr; // IP address
+    int routerSequenceNumber;
 
     struct tableEntryRouting{
         int sequence;

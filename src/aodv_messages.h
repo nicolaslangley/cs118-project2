@@ -7,7 +7,7 @@ class AODVMessage
     // Common AODV message header properties
     int type; // 1 - request, 2 - response, 3 - error
     bool reserved;
-    unsigned long destination_ip;
+    unsigned long destination_ip;  //this is the final destination, not the recipient of the rreq
     int destination_sequence_num;
 
     // Virtual serialization functions
@@ -32,11 +32,11 @@ class AODVRequest: public AODVMessage
     unsigned long originator_ip;
     int originator_sequence_number;
     
-    unsigned long sender_ip;
+    unsigned long sender_ip;   //this can be derived from the source field of the header
     
     // Constructors
     AODVRequest(); // Default used when deserializing
-    AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip);
+    AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num);
 
     // Serialization functions
     char* serialize();
