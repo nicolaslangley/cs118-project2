@@ -159,7 +159,7 @@ void Router::handle_request(AODVRequest* req)
             tableEntryCache reqCacheEntry;
 
             reqCacheEntry.destination = req->destination_ip;
-            reqCacheEntry.src = req->sender_ip;
+            reqCacheEntry.src = req->originator_ip;
             reqCacheEntry.seq = req->originator_sequence_num;  //sequence number of source
             reqCacheEntry.hop_count = req->hop_count;
 
