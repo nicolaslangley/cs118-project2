@@ -289,8 +289,41 @@ void Router::handle_request(AODVRequest* req)
         }        
 
     }
+    else
+    {
+        // compare rreq to cacheTableEntry and choose if hop_count lesser then 
+    }
 
 }
+
+void print_routing_table(){
+
+    cout << "\nRouting Table\n";
+    
+    for(auto it = routing_table.cbegin(); it != routing_table.cend(); ++it)
+    {
+        std::cout << "| key : " << it->first << " | destination_ip : " << it->second.destination_ip << " |  next_ip : " << it->second.next_ip <<
+         " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count << " | is_neighbor : " << it->second.is_neighbor <<
+        " |\n";
+    }
+
+
+}
+
+void print_cache_table(){
+
+    cout << "\nCache Table\n";
+    
+    for(auto it = cache_table.cbegin(); it != cache_table.cend(); ++it)
+    {
+        std::cout << "| key : (" << it->first.first << "," << it->first.second << ") | destination_ip : " << it->second.destination_ip << " |  source_ip : " << it->second.source_ip <<
+        " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count <<
+        " |\n";
+    }
+
+
+}
+
 
 
 void Router::handle_response(AODVRequest* res){}
