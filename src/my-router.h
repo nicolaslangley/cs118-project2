@@ -21,7 +21,7 @@ struct Tuple {
 struct RouterData {
   vector<Tuple> nodeInfo;   //includes tuple for every edge in graph
   vector<int> portList; 
-}
+};
 
 /****************************
  * Simple router class for AODV implementation 
