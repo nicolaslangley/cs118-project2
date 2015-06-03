@@ -41,7 +41,17 @@ Router::Router(int port, int buf_size) : buffer_size(buf_size), port(port)
     if (bind_result < 0) {
         perror("Bind failed!");
     }
-	
+	    //set up neighbors 
+    for (int i = 0; i < data.size(); i++) {
+		if (port == data[i].src_port){
+			tableEntryRouting entry;
+			entry.sequence = 1; 
+			entry.destination_ip = data[i].dest_port; 
+			entry.next_ip = data[i].dest_port;
+			entry hop_count = 1;
+			routing_table.insert(pair<unsigned long, tableEntryRouting>(data[i].src_port, entry);
+		}
+    }
 }
 
 // Parse topology string from file
