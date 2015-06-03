@@ -118,7 +118,9 @@ void Router::send_message(unsigned long addr, int dest_port, char* contents)
     int addr_length = sizeof(addr); // Get length of address - IPv4 should be 4 bytes
     memcpy((void*)&serv_addr.sin_addr.s_addr, &addr, addr_length); // Set target server address
 
-    printf("Target IP address is %d on port %d\n", serv_addr.sin_addr.s_addr, dest_port);
+    stringstream ss;
+    ss << "Target IP address is " << serv_addr.sin_addr.s_addr << " on port " << dest_port << endl;
+    Router::thread_print(ss.str());
 
     // Send contents to destination 
     int sendto_result = sendto(sock_fd, contents, strlen(contents), 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
@@ -336,7 +338,7 @@ void Router::handle_request(AODVRequest* req)
             tableEntryRouting destination_entry = routing_table[req->destination_ip];
             AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
         }
-        else if (!is_dest && !is_in_table && 0)
+        else if (!is_dest && !is_in_table)
         {        
             //      standard replication
             //      add to tables and retransmit to all neighbors

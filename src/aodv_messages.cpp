@@ -41,7 +41,7 @@ AODVRequest::AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_c
  * **************************/
 char* AODVRequest::serialize()
 {
-    printf("Serializing...\n");
+    //printf("Serializing...\n");
     // Store all of the values in a string
     stringstream ss;
     ss << type << ",";
