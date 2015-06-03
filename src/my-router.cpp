@@ -2,6 +2,7 @@
 // Nicolas Langley 904433991
 #include <cstring>
 #include <fstream>
+#include <iterator>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -184,9 +185,22 @@ void Router::send_data(unsigned long addr, int port, char* filename)
     send_message(addr, port, file_contents);
 }
 
-void Router::find_path(unsigned long dest, int port)
+void Router::find_path(unsigned long dest, int dest_port)
 {
+    cout << "Finding best path to router at " << dest << " and " << port << endl;
     // TODO(Michael): create AODV message and send it to neighbours
+    map<unsigned long, tableEntryRouting>::iterator it;
+    cout << "Map size: " << routing_table.size() << endl;
+    for (it = routing_table.begin(); it != routing_table.end(); it++) {
+        if (it->second.is_neighbor) {
+            // We have found a neighbour
+            AODVRequest* req_message = new AODVRequest(port,dest_port,1,port,it->first, false);
+            cout << "DEBUG: " << req_message->serialize() << endl;
+            // TODO: fix the port and address stuff
+            // NOTE: it->first is the port value
+            send_aodv(htonl(0x7f000001), it->first, req_message);
+        }
+    }
 }
 
 void Router::handle_request(AODVRequest* req)
@@ -296,10 +310,15 @@ void Router::handle_request(AODVRequest* req)
             //      for(each neighbor in neighborlist){send AODVRequest()}
 
             //      Generate request for each neighbor 
-
-            int neighbor = 0;
-            AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,neighbor,false);           
-
+            map<unsigned long, tableEntryRouting>::iterator it;
+            for (it = routing_table.begin(); it != routing_table.end(); it++) {
+                if (it->second.is_neighbor) {
+                    // We have found a neighbour
+                    // TODO: change the origin IP address
+                    //AODVRequest* req_message = new AODVRequest(htonl(addr), htonl(dest),1,htonl(addr),htonl(it->first), false);
+                    //send_aodv(it->first, it->second.port, req_message);
+                }
+            }
         }        
 
     }
@@ -314,7 +333,7 @@ void Router::handle_request(AODVRequest* req)
 
 }
 
-void print_routing_table(){
+void Router::print_routing_table() {
 
     cout << "\nRouting Table\n";
     
@@ -328,7 +347,7 @@ void print_routing_table(){
 
 }
 
-void print_cache_table(){
+void Router::print_cache_table(){
 
     cout << "\nCache Table\n";
     

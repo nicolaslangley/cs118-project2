@@ -47,11 +47,14 @@ char* AODVRequest::serialize()
     ss << type << ",";
     ss << reserved << ",";
     ss << destination_ip << ",";
-    ss << destination_sequence_num << ",";
+    //ss << destination_sequence_num << ",";
     ss << hop_count << ",";
-    ss << rreq_id << ",";
+    //ss << rreq_id << ",";
     ss << originator_ip << ",";
-    ss << originator_sequence_number;
+    //ss << originator_sequence_number;
+    ss << recipient_ip << ",";
+    ss << sender_ip << ",";
+    ss << destination_reached << ",";
     string res = ss.str();
     char* result = new char[res.size() + 1];
     copy(res.begin(), res.end(), result);
@@ -79,11 +82,11 @@ void AODVRequest::deserialize(char* ser_data)
     istringstream(values[0]) >> type;
     istringstream(values[1]) >> reserved;
     istringstream(values[2]) >> destination_ip;
-    istringstream(values[3]) >> destination_sequence_num;
-    istringstream(values[4]) >> hop_count;
-    istringstream(values[5]) >> rreq_id;
-    istringstream(values[6]) >> originator_ip;
-    istringstream(values[7]) >> originator_sequence_number;
+    istringstream(values[3]) >> hop_count;
+    istringstream(values[4]) >> originator_ip;
+    istringstream(values[5]) >> recipient_ip;
+    istringstream(values[6]) >> sender_ip;
+    istringstream(values[7]) >> destination_reached;
 }
 
 /********************
