@@ -38,13 +38,47 @@ void load_topology(string filename)
         fprintf(stderr, "Could not open file 'topology.txt'");
         exit(EXIT_FAILURE); 
     }
-    for (int i = 0; i < cnt; i++) {
-        if ((int)topology[i][0] == node_id) {
-            tableEntryRouting entry = delimitTopology(topology[i]);
-            routingTable.insert(std::pair<int, tableEntryRouting>(addr, entry));	
-            printf("%c: Dest_ip: %lu Next_ip: %lu Hop_count: %d \n", node_id, entry.destination_ip, entry.next_ip, entry.hop_count);
-        }	
-    }
+	//parse each line of the topology file 
+	RouterData edges; 
+	map<string, int> nodePort_pair;    //holds all of the unique nodes in the graph (maps id & port #) 
+	Tuple filler;   //filler to avoid segfaults for accessing out of range values in vector 
+	filler.src_id = ""; filler.dest_id = ""; filler.src_port=0; filler.dest_port=0; filler.linkCost=0; 
+	for (int i = 0; i < cnt; i++) {
+		edges.nodeInfo.push_back(filler);
+		string input = topology[i]; 
+		istringstream ss(input); 
+		int itr = 0;
+		string token;           //use stringstream read comma delimited string
+		int portNum; 
+		while(getline(ss, token, ',')) {
+			if (itr == 0) {   //read source name from file 
+				edges.nodeInfo[i].src_id = token;  
+			}
+			else if (itr == 1) {   //read destination name from file 
+				edges.nodeInfo[i].dest_id = token; 
+			}
+			else if (itr == 2) {   //read destination port info from file 
+				string tmp = token; 
+				char const* cstr = tmp.c_str(); 
+				edges.nodeInfo[i].dest_port = atoi(cstr);
+				nodePort_pair.insert(pair<string, int>(edges.nodeInfo[i].dest_id, edges.nodeInfo[i].dest_port));  //give map all possible pairings of node/port 
+			}
+			else if (itr == 3) {  //read link cost from file 
+				string tmp = token; 
+				char const* cstr = tmp.c_str(); 
+				edges.nodeInfo[i].linkCost = atoi(cstr);   //necessary b/c cannot assume link cost less than 10
+			}			
+			itr++; 
+		}
+	}
+	typedef std::map<string, int>::iterator it_type; 
+	for (it_type it = nodePort_pair.begin(); it != nodePort_pair.end(); ++it) {
+		edges.portList.push_back(it->second);    //list of unique ports 
+	}
+	for (int i = 0; i < edges.nodeInfo.size(); i++) {
+		edges.nodeInfo[i].src_port = nodePort_pair[edges.nodeInfo[i].src_id]; 
+	}
+	return edges; 	
 }
 
 void* run_receiver(void* threadarg)
@@ -60,13 +94,16 @@ int main(int argc, char* argv[])
         cerr << "Incorrect usage!" << endl;
         exit(-1);
     }
+
+    // Load the topology file
     string topology_fname(argv[1]);
-    // load_topology()
-    // TODO: create routers 
-    int router_count = 1;
+    RouterData data = load_topology(topology_fname);
+    int router_count = data.portList.size();
     Router* routers[router_count];
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
+        // TODO: create routers 
+        routers[i] = new Router();
         // For each router set it to listen in a new thread
         int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
         if (rc) {
