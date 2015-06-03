@@ -4,6 +4,9 @@
 #include <pthread.h>
 #include <iostream>
 #include <ostream>
+#include <sstream>
+#include <map>
+#include <arpa/inet.h>
 #include "my-router.h"
 
 using namespace std;
@@ -18,6 +21,20 @@ void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
     char* serialized_message = res_message->serialize();
     sender->send_message(dest_addr, dest_port, serialized_message);
 }
+
+struct Tuple {
+	string src_id;
+	string dest_id; 
+	int src_port; 
+	int dest_port; 
+	int linkCost; 
+};
+
+struct RouterData {
+	vector<Tuple> nodeInfo;   //includes a tuple for every edge in the graph 
+	vector<int> portList;    //list of unique source ports 
+}; 
+
 
 void load_topology(string filename)
 {
