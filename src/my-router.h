@@ -10,13 +10,6 @@
 
 using namespace std;
 
-struct tableEntryRouting{
-    int sequence;
-    unsigned long destination_ip;
-    unsigned long next_ip;
-    int hop_count;
-};
-
 /****************************
  * Simple router class for AODV implementation 
  * **************************/
@@ -38,12 +31,19 @@ class Router {
             unsigned long destination_ip;
             unsigned long next_ip;
             int hop_count;
-            bool isNeighbor;
+            bool is_neighbor;
+        };
+
+        struct tableEntryCache{
+            int sequence;
+            unsigned long destination_ip;
+            unsigned long source_ip;
+            int hop_count;
         };
 
         // TODO: where is tableCacheEntry defined?
-        map< pair<unsigned long, unsigned long>, tableEntryCache> cacheTable;  //key is source_ip,destination_ip
-        map<unsigned long, tableEntryRouting> routingTable;
+        map< pair<unsigned long, unsigned long>, tableEntryCache> cache_table;  //key is source_ip,destination_ip
+        map<unsigned long, tableEntryRouting> routing_table;
 
         // Constructor: sets link costs according to topology
         Router(int port, int buf_size);

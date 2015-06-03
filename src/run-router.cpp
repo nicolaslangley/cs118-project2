@@ -38,7 +38,7 @@ void load_topology(string filename)
     }
     for (int i = 0; i < cnt; i++) {
         if ((int)topology[i][0] == node_id) {
-            tableEntryRouting entry = delimitTopology(topology[i]);
+            Router::tableEntryRouting entry = delimitTopology(topology[i]);
             routingTable.insert(std::pair<int, tableEntryRouting>(addr, entry));	
             printf("%c: Dest_ip: %lu Next_ip: %lu Hop_count: %d \n", node_id, entry.destination_ip, entry.next_ip, entry.hop_count);
         }	
