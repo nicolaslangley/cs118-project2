@@ -350,10 +350,10 @@ void Router::handle_request(AODVRequest* req)
     }
     else
     {
-        if(req->hop_count < routing_table[originator_ip].hop_count)
-        {
-            
-        }
+        //if(req->hop_count < routing_table[originator_ip].hop_count)
+        //{
+        //    
+        //}
         // compare rreq to cacheTableEntry and choose if hop_count lesser then 
     }
 
