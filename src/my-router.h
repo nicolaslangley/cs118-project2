@@ -55,13 +55,13 @@ class Router {
         // Wrappers for sending aodv messages and data
         void send_aodv(unsigned long addr, int port, AODVMessage* message);
         void send_data(unsigned long addr, int port, char* filename);
-
+        
+        // Find path from current router to destination
+        void find_path(unsigned long dest, int port);
         // TODO(Frank): implement functions for loading and setting up topology
         //              define whatever functions you want
         tableEntryRouting delimitTopology(std::string str);	
         // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
         void handle_request(AODVRequest* req);
         void handle_response(AODVRequest* res);
-
-        void find_path(unsigned long dest, int port);
 };
