@@ -54,7 +54,10 @@ RouterData load_topology(string filename)
 	//parse each line of the topology file 
 	RouterData edges; 
 	map<string, int> nodePort_pair;    //holds all of the unique nodes in the graph (maps id & port #) 
+	Tuple filler;   //filler to avoid segfaults for accessing out of range values in vector 
+	filler.src_id = ""; filler.dest_id = ""; filler.src_port=0; filler.dest_port=0; filler.linkCost=0; 
 	for (int i = 0; i < cnt; i++) {
+		edges.nodeInfo.push_back(filler);
 		string input = topology[i]; 
 		istringstream ss(input); 
 		int itr = 0;
