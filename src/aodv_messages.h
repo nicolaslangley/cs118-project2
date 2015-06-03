@@ -38,6 +38,12 @@ class AODVRequest: public AODVMessage
 
         // Constructors
         AODVRequest(); // Default used when deserializing
+        // Takes the following:
+        //      orig_ip   : origin IP address
+        //      dest_ip   : destination IP address
+        //      send_ip   : current sender IP address
+        //      rec_ip    : next hop IP address
+        //      dest_rchd : RREP flag
         AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_rchd);
 
         bool timeElapsed();
