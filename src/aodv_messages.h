@@ -34,10 +34,11 @@ class AODVRequest: public AODVMessage
 
         bool destination_reached;
         unsigned long sender_ip;   //this can be derived from the source field of the header
+        unsigned long recipient_ip;
 
         // Constructors
         AODVRequest(); // Default used when deserializing
-        AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num, bool dest_rchd);
+        AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_rchd);
 
         bool timeElapsed();
 

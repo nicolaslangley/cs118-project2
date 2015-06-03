@@ -183,15 +183,14 @@ void Router::handle_request(AODVRequest* req)
 {
     //logic needed to handle if the receiving node is the final destination
 
-    //check cacheTable to see if message has already been handled
+    //check cache_table to see if message has already been handled
     pair<unsigned long,unsigned long> incomingRequestKey = make_pair(req->originator_ip,req->destination_ip);
 
     bool destination_in_routing_table;
 
-    if(cacheTable.find(incomingRequestKey) == cacheTable.end()){         
-        //Do nothing, we've already responded to this RREQ
-    } else {
-        // cache entry
+    // do something if RREQ is not in the cache_table
+    if (cache_table.find(incomingRequestKey) == cache_table.end())
+    {         
             tableEntryCache reqCacheEntry;
 
             reqCacheEntry.destination_ip = req->destination_ip;
@@ -199,137 +198,129 @@ void Router::handle_request(AODVRequest* req)
             reqCacheEntry.sequence = req->originator_sequence_number;  //sequence number of source
             reqCacheEntry.hop_count = req->hop_count;
 
-            cacheTable[incomingRequestKey]=reqCacheEntry;
+            cache_table[incomingRequestKey]=reqCacheEntry;
 
-
-        // !~All potential senders are neighbors and entries for these values will be populated at startup~!
-        // 1st routing table entry
-        // if(routingTable.find(req->sender_ip) == routingTable.end())
-        // {
-        //     if(req->destination_sequence_num > routingTable[req->sender_ip].sequence)
-        //     {
-        //         tableEntryRouting previousNode;
-                
-        //         previousNode.destination_ip = req->sender_ip;
-        //         previousNode.next_ip = req->sender_ip;
-        //         previousNode.sequence = req->destination_sequence_num;
-        //         previousNode.hop_count = 1;
-        //         previousNode.isNeighbor = false;
-
-        //         routingTable[req->sender_ip] = previousNode;
-        //     }
-
-        // }
-        // else
-        // {
-        //     destination_in_routing_table = true;
-        // }
-
-        // 2nd routing table entry
-        if(routingTable.find(req->originator_ip) == routingTable.end())
+        
+        // do something if originator_ip not in the routing_table
+        if (routing_table.find(req->originator_ip) == routing_table.end())
         {
-            if(req->destination_sequence_num > routingTable[req->sender_ip].sequence)
-            { 
+            // sequence number functionality to be added later, if(req->destination_sequence_num > routing_table[req->sender_ip].sequence){ 
                 tableEntryRouting previousNodeCumulative;
                 
                 previousNodeCumulative.destination_ip = req->originator_ip;
                 previousNodeCumulative.next_ip = req->sender_ip;
                 previousNodeCumulative.sequence = req->destination_sequence_num;
-                previousNodeCumulative.hop_count = (req->hop_count)+1;        
-                previousNodeCumulative.isNeighbor = false;
+                previousNodeCumulative.hop_count = req->hop_count;        
+                previousNodeCumulative.is_neighbor = false;
 
-                routingTable[req->originator_ip]=previousNodeCumulative;
-            }
+                routing_table[req->originator_ip]=previousNodeCumulative;
+            // }
         }
-        else
+        
+        // do something if destination_ip is in the routing_table
+        if (!(routing_table.find(req->destination_ip) == routing_table.end()))
         {
             destination_in_routing_table = true;
-        }
-
-
-        // if current != destination && destination_found == false
-
-        if      (addr != req->destination_ip && destination_in_routing_table == false)
+        }        
+        else
         {
-        //      add to tables and retransmit to all neighbors
-        //      for(each neighbor in neighborlist){send AODVRequest()}
+            destination_in_routing_table = false;
         }
-        else if (addr != req->destination_ip && destination_in_routing_table == true)
-        {
-        //      add to tables and retransmit only to the destination->next
-        }
-        else if (addr == req->destination_ip && req->destination_reached == true)
-        {
-        //      die     
-        }
+        
+        //  ---AODVRequest Generating Phase---
+
+        //  AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_fd);
+ 
+        if      (addr == req->destination_ip && req->destination_reached == true)
+        {}
         else if (addr == req->destination_ip && req->destination_reached == false)
         {
         //      else set turnaround_flag = true
-        //      and issue RREQ with switched originator and destination.     
+        //      and issue RREQ with switched originator and destination. 
+        //      AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_fd);        
+        //      Generate request flip origin and destination
+                AODVRequest(req->destination_ip,req->originator_ip,0,addr,req->sender_ip,true);       
         }
-        
+        else if (addr != req->destination_ip && req->destination_reached == true) //don return all destinations will be in routing tables
+        {
+                tableEntryRouting destination_entry = routing_table[req->destination_ip];
+                AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
+        }
+        else if (addr != req->destination_ip && destination_in_routing_table == true && destination_reached == false)
+        {
+        //      add to tables and retransmit only to the destination->next
+        //      follow routing_table to next
+                tableEntryRouting destination_entry = routing_table[req->destination_ip];
+                AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
+        }
+        else if (addr != req->destination_ip && destination_in_routing_table == false)
+        {        
+        //      standard replication
+        //      add to tables and retransmit to all neighbors
+        //      for(each neighbor in neighborlist){send AODVRequest()}
 
-        //AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num, bool dest_fd);
-        AODVRequest(req->originator_ip,req->destination_ip,req->hop_count,addr,req->destination_sequence_num,false);
-
+        //      Generate request for each neighbor 
         
+                int neighbor = 0;
+                AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,neighbor,false);           
+
+        }        
 
     }
 
 }
 
 
-void Router::handle_response(AODVRequest* res)
-{
+void Router::handle_response(AODVRequest* res){}
 
-    //check cacheTable to see if message has already been handled
-    pair<unsigned long,unsigned long> incomingResponseKey = make_pair(res->destination_ip,res->originator_ip);
+    // //check cache_table to see if message has already been handled
+    // pair<unsigned long,unsigned long> incomingResponseKey = make_pair(res->destination_ip,res->originator_ip);
 
-    if(cacheTable.find(incomingResponseKey) == cacheTable.end()){         
-        //Do nothing, we've already responded to this RREQ
-    } else {
-        // cache entry
-            tableEntryCache reqCacheEntry;
+    // if(cache_table.find(incomingResponseKey) == cache_table.end()){         
+    //     //Do nothing, we've already responded to this RREQ
+    // } else {
+    //     // cache entry
+    //         tableEntryCache reqCacheEntry;
 
-            reqCacheEntry.destination_ip = res->originator_ip;  //in RREP the destination becomes the origin
-            reqCacheEntry.source_ip = res->destination_ip;
-            reqCacheEntry.sequence = res->destination_sequence_num;  //sequence number of destination
-            reqCacheEntry.hop_count = res->hop_count;
+    //         reqCacheEntry.destination_ip = res->originator_ip;  //in RREP the destination becomes the origin
+    //         reqCacheEntry.source_ip = res->destination_ip;
+    //         reqCacheEntry.sequence = res->destination_sequence_num;  //sequence number of destination
+    //         reqCacheEntry.hop_count = res->hop_count;
 
-            cacheTable[incomingResponseKey]=reqCacheEntry;
+    //         cache_table[incomingResponseKey]=reqCacheEntry;
 
-        // 1st routing table entry
-        if(routingTable.find(res->sender_ip) == routingTable.end())
-        {
-            if(res->originator_sequence_number > routingTable[res->sender_ip].sequence)
-            {
-                tableEntryRouting previousNode;
+    //     // 1st routing table entry
+    //     if(routing_table.find(res->sender_ip) == routing_table.end())
+    //     {
+    //         if(res->originator_sequence_number > routing_table[res->sender_ip].sequence)
+    //         {
+    //             tableEntryRouting previousNode;
                 
-                previousNode.destination_ip = res->sender_ip;
-                previousNode.next_ip = res->sender_ip;
-                previousNode.sequence = res->destination_sequence_num;
-                previousNode.hop_count = 1;
+    //             previousNode.destination_ip = res->sender_ip;
+    //             previousNode.next_ip = res->sender_ip;
+    //             previousNode.sequence = res->destination_sequence_num;
+    //             previousNode.hop_count = 1;
 
-                routingTable[res->sender_ip] = previousNode;
-            }
+    //             routing_table[res->sender_ip] = previousNode;
+    //         }
 
-        }
+    //     }
 
-        // 2nd routing table entry
-        if(routingTable.find(res->originator_ip) == routingTable.end())
-        {
-            if(res->originator_sequence_number > routingTable[res->sender_ip].sequence)
-            { 
-                tableEntryRouting previousNodeCumulative;
+    //     // 2nd routing table entry
+    //     if(routing_table.find(res->originator_ip) == routing_table.end())
+    //     {
+    //         if(res->originator_sequence_number > routing_table[res->sender_ip].sequence)
+    //         { 
+    //             tableEntryRouting previousNodeCumulative;
                 
-                previousNodeCumulative.destination_ip = res->destination_ip;
-                previousNodeCumulative.next_ip = res->sender_ip;
-                previousNodeCumulative.sequence = res->destination_sequence_num;
-                previousNodeCumulative.hop_count = (res->hop_count)+1;        
+    //             previousNodeCumulative.destination_ip = res->destination_ip;
+    //             previousNodeCumulative.next_ip = res->sender_ip;
+    //             previousNodeCumulative.sequence = res->destination_sequence_num;
+    //             previousNodeCumulative.hop_count = (res->hop_count)+1;        
 
-                routingTable[res->destination_ip]=previousNodeCumulative;
-            }
-        }
+    //             routing_table[res->destination_ip]=previousNodeCumulative;
+    //         }
+        // }
 
         // if current != destination && destination_found == false
         //      add to tables and retransmit to all neighbors
@@ -343,11 +334,11 @@ void Router::handle_response(AODVRequest* res)
 
         //for(each neighbor in neighborlist){send AODVRequest()}
         //AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, int dest_seq_num, bool dest_fd);
-        AODVRequest(res->originator_ip,res->destination_ip,res->hop_count,addr,res->destination_sequence_num,false);
+        // AODVRequest(res->originator_ip,res->destination_ip,res->hop_count,addr,res->destination_sequence_num,false);
 
-    }
+    // }
         
-}
+// }
 
 
 
