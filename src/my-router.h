@@ -28,9 +28,9 @@ struct RouterData {
  * Simple router class for AODV implementation 
  * **************************/
 class Router {
+    public:
         // Mutex for thread printing 
         static mutex mtx;
-    public:
         // Router properties
         // TODO(Frank): add variables for local link state
         //              set these in functions to be implemented below
@@ -82,8 +82,8 @@ class Router {
         // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
         void handle_request(AODVRequest* req);
         void handle_response(AODVRequest* res);
-        void print_routing_table();
-        void print_cache_table();
+        string print_routing_table();
+        string print_cache_table();
 };
 
 

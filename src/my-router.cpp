@@ -39,7 +39,9 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
 
     // Set global class variable with address info
     addr = router_addr.sin_addr.s_addr;
-    printf("Address of router on port %d is: %lu\n", port, addr);
+
+    stringstream ss;
+    ss << "Address of router on port " << port << " is " << addr << endl;
 
     // Attempt to bind the socket to port
     int bind_result = bind(sock_fd, (struct sockaddr*)&router_addr, sizeof(router_addr));
@@ -47,11 +49,11 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
         perror("Bind failed!");
     }
 
-    cout << "Adding neighbours for " << port << endl;
+    ss << "Adding neighbours for " << port << endl;
     //set up neighbors 
     for (int i = 0; i < data.size(); i++) {
         if (port == data[i].src_port){
-            cout << "Neighbour is " << data[i].dest_port << endl;
+            ss << "Neighbour is " << data[i].dest_port << endl;
             tableEntryRouting entry;
             entry.sequence = 1; 
             entry.destination_ip = data[i].dest_port; 
@@ -62,6 +64,10 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
             //routing_table.insert(pair<unsigned long, tableEntryRouting>(data[i].src_port, entry));
         }
     }
+    Router::mtx.lock();
+    cout << ss.str();
+    Router::mtx.unlock();
+
 }
 
 // Parse topology string from file
@@ -229,7 +235,7 @@ void Router::handle_request(AODVRequest* req)
     ss << "Handling request at " << port << endl;
     
     //cout << "Printing cache table begin at " << port << endl;
-    print_cache_table();
+    ss << print_cache_table();
     //logic needed to handle if the receiving node is the final destination
 
     //check cache_table to see if message has already been handled
@@ -305,8 +311,6 @@ void Router::handle_request(AODVRequest* req)
         else
             is_in_table = false;
 
-        cout << "Destination: " << is_dest << "In table: " << is_in_table << endl;
-
         if (is_dest && is_rrep)
         {
             print_routing_table();
@@ -360,7 +364,7 @@ void Router::handle_request(AODVRequest* req)
         }        
 
         //cout << "Printing cache table end at " << port << endl;
-        print_cache_table();
+        ss << print_cache_table();
     }
     else
     {
@@ -376,7 +380,7 @@ void Router::handle_request(AODVRequest* req)
     Router::mtx.unlock();
 }
 
-void Router::print_routing_table()
+string Router::print_routing_table()
 {
     stringstream ss;
     ss << "\nRouting Table\n";
@@ -388,12 +392,10 @@ void Router::print_routing_table()
          " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count << " | is_neighbor : " << it->second.is_neighbor <<
         " |\n";
     }
-    Router::mtx.lock();
-    cout << ss.str();
-    Router::mtx.unlock();
+    return ss.str();
 }
 
-void Router::print_cache_table()
+string Router::print_cache_table()
 {
 
     stringstream ss;
@@ -407,9 +409,7 @@ void Router::print_cache_table()
         " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count <<
         " |\n";
     }
-    Router::mtx.lock();
-    cout << ss.str();
-    Router::mtx.unlock();
+    return ss.str();
 
 }
 

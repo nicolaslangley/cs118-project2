@@ -95,6 +95,9 @@ void* run_receiver(void* threadarg)
 
 int main(int argc, char* argv[])
 {
+    // Stringstream for printing
+    stringstream ss;
+
     if (argc != 2) {
         cerr << "Incorrect usage!" << endl;
         cerr << "Usage: " << endl << "router.exe <topology file>" << endl;
@@ -120,8 +123,14 @@ int main(int argc, char* argv[])
 
     // Loop menu
     while (1) {
-        cout << "Enter command:" << endl;
-        cout << "Usage:" << endl << "\'L\' to list routers" << endl << "\'M\' to send a message" << endl;
+        ss.str("");
+        ss << "Enter command:" << endl;
+        ss << "Usage:" << endl << "\'L\' to list routers" << endl << "\'M\' to send a message" << endl;
+        Router::mtx.lock();
+        cout << ss.str();
+        Router::mtx.unlock();
+        ss.str("");
+
         char input;
         cin >> input;
         // Handle input
@@ -129,20 +138,28 @@ int main(int argc, char* argv[])
             // List the routers
             case 'L':{
                          for (int i = 0; i < router_count; i++) {
-                             cout << "Router " << i << " on " << routers[i]->port << endl;  
+                             ss << "Router " << i << " on " << routers[i]->port << endl;  
                          }
                          break;
                      }
             // Send a message from source to destination router
             case 'M':{
-                         cout << "Enter source router: " << endl;
+                         ss << "Enter source router: " << endl;
+                         Router::mtx.lock();
+                         cout << ss.str();
+                         Router::mtx.unlock();
+                         ss.str("");
                          int sender;
                          cin >> sender;
-                         cout << "Source port: " << routers[sender]->port << endl;
-                         cout << "Enter destination router: " << endl; 
+                         ss << "Source port: " << routers[sender]->port << endl;
+                         ss << "Enter destination router: " << endl; 
+                         Router::mtx.lock();
+                         cout << ss.str();
+                         Router::mtx.unlock();
+                         ss.str("");
                          int receiver;
                          cin >> receiver;
-                         cout << "Destination port: " << routers[receiver]->port << endl;
+                         ss << "Destination port: " << routers[receiver]->port << endl;
                          // Stop the sender from listening
                          pthread_cancel(threads[sender]); // TODO: should I be calling this?
                          int destination_port = routers[receiver]->port;
@@ -151,9 +168,13 @@ int main(int argc, char* argv[])
                          break;
                      }
             default:{
-                        cout << "Invalid usage!" << endl;
-                        cout << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
+                        ss << "Invalid usage!" << endl;
+                        ss << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
                     }
         }
+        Router::mtx.lock();
+        cout << ss.str();
+        Router::mtx.unlock();
+        ss.str("");
     }
 }
