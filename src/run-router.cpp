@@ -86,10 +86,10 @@ RouterData load_topology(string filename)
 	return edges; 	
 }
 
+// Run receive_message function in thread
 void* run_receiver(void* threadarg)
 {
     Router* receiver = (Router*)threadarg;
-    printf("Running receiver in thread...\n");
     receiver->receive_message();
 }
 
@@ -124,11 +124,11 @@ int main(int argc, char* argv[])
     // Loop menu
     while (1) {
         ss.str("");
+        ss << "====================" << endl << "       MENU" << endl << "====================" << endl;
         ss << "Enter command:" << endl;
         ss << "Usage:" << endl << "\'L\' to list routers" << endl << "\'M\' to send a message" << endl;
-        Router::mtx.lock();
-        cout << ss.str();
-        Router::mtx.unlock();
+        ss << "====================" << endl; 
+        Router::thread_print(ss.str());
         ss.str("");
 
         char input;
@@ -145,17 +145,13 @@ int main(int argc, char* argv[])
             // Send a message from source to destination router
             case 'M':{
                          ss << "Enter source router: " << endl;
-                         Router::mtx.lock();
-                         cout << ss.str();
-                         Router::mtx.unlock();
+                         Router::thread_print(ss.str());
                          ss.str("");
                          int sender;
                          cin >> sender;
                          ss << "Source port: " << routers[sender]->port << endl;
                          ss << "Enter destination router: " << endl; 
-                         Router::mtx.lock();
-                         cout << ss.str();
-                         Router::mtx.unlock();
+                         Router::thread_print(ss.str());
                          ss.str("");
                          int receiver;
                          cin >> receiver;
@@ -172,9 +168,6 @@ int main(int argc, char* argv[])
                         ss << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
                     }
         }
-        Router::mtx.lock();
-        cout << ss.str();
-        Router::mtx.unlock();
-        ss.str("");
+        Router::thread_print(ss.str());
     }
 }

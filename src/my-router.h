@@ -31,6 +31,7 @@ class Router {
     public:
         // Mutex for thread printing 
         static mutex mtx;
+        static void thread_print(string input);
         // Router properties
         // TODO(Frank): add variables for local link state
         //              set these in functions to be implemented below

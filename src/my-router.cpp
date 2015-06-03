@@ -13,8 +13,16 @@
 
 using namespace std;
 
-// Mutex for cout
+// Mutex for thread printing
 mutex Router::mtx;
+
+// Static thread_print function
+void Router::thread_print(string input)
+{
+    Router::mtx.lock();
+    cout << input;
+    Router::mtx.unlock();
+}
 
 /****************************
  * Constructor sets port value and buffer size
@@ -64,10 +72,7 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
             //routing_table.insert(pair<unsigned long, tableEntryRouting>(data[i].src_port, entry));
         }
     }
-    Router::mtx.lock();
-    cout << ss.str();
-    Router::mtx.unlock();
-
+    Router::thread_print(ss.str());
 }
 
 // Parse topology string from file
@@ -140,9 +145,7 @@ void Router::receive_message()
     for (;;) {
         ss.str("");
         ss << "Waiting for message on port: " << port << endl;
-        Router::mtx.lock();
-        cout << ss.str();
-        Router::mtx.unlock();
+        Router::thread_print(ss.str());
         receive_len = recvfrom(sock_fd, buffer, buffer_size, 0, (struct sockaddr*)&remote_addr, &addr_length);
         if (receive_len > 0) {
             buffer[receive_len] = 0;
@@ -151,9 +154,7 @@ void Router::receive_message()
             char* message = (char*)(&buffer);
             int message_type = message[0] - '0'; // TODO: this is not checked
             ss << "AODV message type is " << message_type << endl;
-            Router::mtx.lock();
-            cout << ss.str();
-            Router::mtx.unlock();
+            Router::thread_print(ss.str());
             if (message_type == 1) {
                 //cout << "Received REQ" << endl;
                 // Create a new AODV request message and load serialized data
@@ -375,9 +376,7 @@ void Router::handle_request(AODVRequest* req)
         // compare rreq to cacheTableEntry and choose if hop_count lesser then 
     }
 
-    Router::mtx.lock();
-    cout << endl << endl << ss.str() << endl << endl;
-    Router::mtx.unlock();
+    Router::thread_print(ss.str());
 }
 
 string Router::print_routing_table()
