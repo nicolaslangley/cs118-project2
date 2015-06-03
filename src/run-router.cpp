@@ -104,15 +104,16 @@ int main(int argc, char* argv[])
         cerr << "Incorrect usage!" << endl;
         exit(-1);
     }
+
+    // Load the topology file
     string topology_fname(argv[1]);
-    // TODO: load_topology()
     RouterData data = load_topology(topology_fname);
-    int router_count = 1;
+    int router_count = data.portList.size();
     Router* routers[router_count];
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
         // TODO: create routers 
-        // routers[i] = new Router();
+        routers[i] = new Router();
         // For each router set it to listen in a new thread
         int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
         if (rc) {
