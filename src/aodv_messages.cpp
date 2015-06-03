@@ -54,7 +54,7 @@ char* AODVRequest::serialize()
     //ss << originator_sequence_number;
     ss << recipient_ip << ",";
     ss << sender_ip << ",";
-    ss << destination_reached << ",";
+    ss << destination_reached; // No comma after last entry
     string res = ss.str();
     char* result = new char[res.size() + 1];
     copy(res.begin(), res.end(), result);

@@ -42,15 +42,20 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
     if (bind_result < 0) {
         perror("Bind failed!");
     }
+
+    cout << "Adding neighbours for " << port << endl;
     //set up neighbors 
     for (int i = 0; i < data.size(); i++) {
         if (port == data[i].src_port){
+            cout << "Neighbour is " << data[i].dest_port << endl;
             tableEntryRouting entry;
             entry.sequence = 1; 
             entry.destination_ip = data[i].dest_port; 
             entry.next_ip = data[i].dest_port;
             entry.hop_count = 1;
-            routing_table.insert(pair<unsigned long, tableEntryRouting>(data[i].src_port, entry));
+            entry.is_neighbor = true;
+            routing_table[data[i].dest_port] = entry;
+            //routing_table.insert(pair<unsigned long, tableEntryRouting>(data[i].src_port, entry));
         }
     }
 }
@@ -129,14 +134,17 @@ void Router::receive_message()
             printf("Received %d bytes\n", receive_len);
             printf("Text data received: %s\n", buffer);
             char* message = (char*)(&buffer);
-            int message_type = buffer[0]; // TODO: this is not checked
+            int message_type = message[0] - '0'; // TODO: this is not checked
+            cout << "Message type: " << message_type << endl;
             printf("AODV message type is: %c\n", buffer[0]);
             if (message_type == 1) {
+                cout << "Received REQ" << endl;
                 // Create a new AODV request message and load serialized data
                 AODVRequest* req_message = new AODVRequest();
                 req_message->deserialize(message);
                 handle_request(req_message);
             } else if (message_type == 2) {
+                cout << "Received RREP" << endl;
                 // Create a new AODV response message and load serialized data
                 AODVRequest* res_message = new AODVRequest();
                 res_message->deserialize(message);
@@ -187,12 +195,13 @@ void Router::send_data(unsigned long addr, int port, char* filename)
 
 void Router::find_path(unsigned long dest, int dest_port)
 {
-    cout << "Finding best path to router at " << dest << " and " << port << endl;
+    cout << "Finding best path to router at " << dest << " and " << dest_port << endl;
     // TODO(Michael): create AODV message and send it to neighbours
     map<unsigned long, tableEntryRouting>::iterator it;
-    cout << "Map size: " << routing_table.size() << endl;
+    cout << "Number of neighbours: " << routing_table.size() << endl;
     for (it = routing_table.begin(); it != routing_table.end(); it++) {
         if (it->second.is_neighbor) {
+            cout << "Sending to neighbour on port " << it->first << endl;
             // We have found a neighbour
             AODVRequest* req_message = new AODVRequest(port,dest_port,1,port,it->first, false);
             cout << "DEBUG: " << req_message->serialize() << endl;
@@ -205,6 +214,9 @@ void Router::find_path(unsigned long dest, int dest_port)
 
 void Router::handle_request(AODVRequest* req)
 {
+    cout << "Handling request at " << port << endl;
+    cout << "Printing cache table begin at " << port << endl;
+    print_cache_table();
     //logic needed to handle if the receiving node is the final destination
 
     //check cache_table to see if message has already been handled
@@ -214,7 +226,8 @@ void Router::handle_request(AODVRequest* req)
 
     // do something if RREQ is not in the cache_table
     if (cache_table.find(incomingRequestKey) == cache_table.end())
-    {         
+    {
+        cout << "REQ not in cache table at " << port << endl;        
         tableEntryCache reqCacheEntry;
 
         reqCacheEntry.destination_ip = req->destination_ip;
@@ -275,9 +288,11 @@ void Router::handle_request(AODVRequest* req)
         else
             is_in_table = false;
 
+        cout << "Destination: " << is_dest << "In table: " << is_in_table << endl;
 
-        if      (is_dest && is_rrep)
+        if (is_dest && is_rrep)
         {
+            print_routing_table();
             //      Route complete.
         }
         else if (is_dest && !is_rrep)
@@ -290,7 +305,7 @@ void Router::handle_request(AODVRequest* req)
         else if (!is_dest && is_rrep) //don return all destinations will be in routing tables
         {
             tableEntryRouting destination_entry = routing_table[req->destination_ip];
-            AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
+            AODVRequest(req->destination_ip,req->originator_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
         }
         else if (!is_dest && is_in_table && !is_rrep)
         {
@@ -299,7 +314,7 @@ void Router::handle_request(AODVRequest* req)
             tableEntryRouting destination_entry = routing_table[req->destination_ip];
             AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
         }
-        else if (!is_dest && !is_in_table)
+        else if (!is_dest && !is_in_table && 0)
         {        
             //      standard replication
             //      add to tables and retransmit to all neighbors
@@ -307,19 +322,31 @@ void Router::handle_request(AODVRequest* req)
 
             //      Generate request for each neighbor 
             map<unsigned long, tableEntryRouting>::iterator it;
+            cout << "Number of neighbours: " << routing_table.size() << endl;
             for (it = routing_table.begin(); it != routing_table.end(); it++) {
                 if (it->second.is_neighbor) {
+                    cout << "Sending to neighbour on port " << it->first << endl;
                     // We have found a neighbour
-                    // TODO: change the origin IP address
-                    //AODVRequest* req_message = new AODVRequest(htonl(addr), htonl(dest),1,htonl(addr),htonl(it->first), false);
-                    //send_aodv(it->first, it->second.port, req_message);
+                    AODVRequest* req_message = new AODVRequest(req->originator_ip,
+                                                               req->destination_ip,
+                                                               1,
+                                                               port,
+                                                               it->first,
+                                                               false);
+                    cout << "DEBUG: " << req_message->serialize() << endl;
+                    // TODO: fix the port and address stuff
+                    // NOTE: it->first is the port value
+                    send_aodv(htonl(0x7f000001), it->first, req_message);
                 }
             }
         }        
 
+        cout << "Printing cache table end at " << port << endl;
+        print_cache_table();
     }
     else
     {
+        cout << "REQ is in cache table at " << port << endl;
         // compare rreq to cacheTableEntry and choose if hop_count lesser then 
     }
 
