@@ -28,18 +28,18 @@ struct Tuple {
 	int linkCost; 
 };
 
-struct routerData {
+struct RouterData {
 	vector<Tuple> nodeInfo;   //includes a tuple for every edge in the graph 
 	vector<int> portList;    //list of unique source ports 
 }; 
 
-routerData load_topology(string filename)
+RouterData load_topology(string filename)
 {
     string tuple;  
     vector<string> topology;     //holds each line of topology file 
     ifstream tfile(filename.c_str());
     int cnt = 0;
-	//separate the topology file into a vector of strings, each string is one line in the file 
+    //separate the topology file into a vector of strings, each string is one line in the file 
     if(tfile.is_open()) {             
         while(getline(tfile, tuple)) {
             topology.push_back(tuple); 
@@ -52,7 +52,7 @@ routerData load_topology(string filename)
         exit(EXIT_FAILURE); 
     }
 	//parse each line of the topology file 
-	routerData edges; 
+	RouterData edges; 
 	map<string, int> nodePort_pair;    //holds all of the unique nodes in the graph (maps id & port #) 
 	for (int i = 0; i < cnt; i++) {
 		string input = topology[i]; 
@@ -106,6 +106,7 @@ int main(int argc, char* argv[])
     }
     string topology_fname(argv[1]);
     // TODO: load_topology()
+    RouterData data = load_topology(topology_fname);
     int router_count = 1;
     Router* routers[router_count];
     pthread_t threads[router_count];
