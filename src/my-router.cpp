@@ -231,29 +231,51 @@ void Router::handle_request(AODVRequest* req)
 
         //  AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_fd);
  
-        if      (addr == req->destination_ip && req->destination_reached == true)
-        {}
-        else if (addr == req->destination_ip && req->destination_reached == false)
+
+        bool is_rrep;
+        bool is_dest;
+        bool is_in_table;
+
+        if(req->destination_reached == true)
+            is_rrep = true;
+        else
+            is_rrep = false;
+
+        if(addr == req->destination_ip)
+            is_dest = true;
+        else
+            is_dest = false;
+
+        if(destination_in_routing_table == true)
+            is_in_table = true;
+        else
+            is_in_table = false;
+        
+
+        if      (is_dest && is_rrep)
+        {
+        //      Route complete.
+        }
+        else if (is_dest && !is_rrep)
         {
         //      else set turnaround_flag = true
         //      and issue RREQ with switched originator and destination. 
-        //      AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_fd);        
         //      Generate request flip origin and destination
                 AODVRequest(req->destination_ip,req->originator_ip,0,addr,req->sender_ip,true);       
         }
-        else if (addr != req->destination_ip && req->destination_reached == true) //don return all destinations will be in routing tables
+        else if (!is_dest && is_rrep) //don return all destinations will be in routing tables
         {
                 tableEntryRouting destination_entry = routing_table[req->destination_ip];
                 AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
         }
-        else if (addr != req->destination_ip && destination_in_routing_table == true && destination_reached == false)
+        else if (!is_dest && is_in_table && !is_rrep)
         {
         //      add to tables and retransmit only to the destination->next
         //      follow routing_table to next
                 tableEntryRouting destination_entry = routing_table[req->destination_ip];
                 AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
         }
-        else if (addr != req->destination_ip && destination_in_routing_table == false)
+        else if (!is_dest && !is_in_table)
         {        
         //      standard replication
         //      add to tables and retransmit to all neighbors

@@ -4,43 +4,30 @@
 #include <pthread.h>
 #include <iostream>
 #include <ostream>
-#include <sstream>
-#include <map>
-#include <arpa/inet.h>
 #include "my-router.h"
 
 using namespace std;
 
 void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
 {
-    printf("Sending message to server at address %lu on port %d\n", htonl(dest_addr), dest_port);
-    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr),1,htonl(sender->addr),htonl(sender->routerSequenceNumber));
+    printf("Sending message to server at address %u on port %d\n", htonl(dest_addr), dest_port);
+    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr),1,htonl(sender->addr),htonl(sender->addr), false);
+    // AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_rchd);
+
     AODVResponse* res_message = new AODVResponse(htonl(sender->addr), htonl(dest_addr));
     char* serialized_message = res_message->serialize();
     sender->send_message(dest_addr, dest_port, serialized_message);
 }
 
-struct Tuple {
-	string src_id;
-	string dest_id; 
-	int src_port; 
-	int dest_port; 
-	int linkCost; 
-};
-
-struct RouterData {
-	vector<Tuple> nodeInfo;   //includes a tuple for every edge in the graph 
-	vector<int> portList;    //list of unique source ports 
-}; 
-
-RouterData load_topology(string filename)
+void load_topology(string filename)
 {
-    string tuple;  
-    vector<string> topology;     //holds each line of topology file 
-    ifstream tfile(filename.c_str());
+    //Node Topology: 
+    node_id = port-9935;   //results in A->F 
+    std::string tuple;  
+    std::vector<std::string> topology; 
+    std::ifstream tfile("topology.txt");
     int cnt = 0;
-    //separate the topology file into a vector of strings, each string is one line in the file 
-    if(tfile.is_open()) {             
+    if(tfile.is_open()) {
         while(getline(tfile, tuple)) {
             topology.push_back(tuple); 
             cnt++;
@@ -51,44 +38,13 @@ RouterData load_topology(string filename)
         fprintf(stderr, "Could not open file 'topology.txt'");
         exit(EXIT_FAILURE); 
     }
-	//parse each line of the topology file 
-	RouterData edges; 
-	map<string, int> nodePort_pair;    //holds all of the unique nodes in the graph (maps id & port #) 
-	for (int i = 0; i < cnt; i++) {
-		string input = topology[i]; 
-		istringstream ss(input); 
-		int itr = 0;
-		string token;           //use stringstream read comma delimited string
-		int portNum; 
-		while(getline(ss, token, ',')) {
-			if (itr == 0) {   //read source name from file 
-				edges.nodeInfo[i].src_id = token;  
-			}
-			else if (itr == 1) {   //read destination name from file 
-				edges.nodeInfo[i].dest_id = token; 
-			}
-			else if (itr == 2) {   //read destination port info from file 
-				string tmp = token; 
-				char const* cstr = tmp.c_str(); 
-				edges.nodeInfo[i].dest_port = atoi(cstr);
-				nodePort_pair.insert(pair<string, int>(edges.nodeInfo[i].dest_id, edges.nodeInfo[i].dest_port));  //give map all possible pairings of node/port 
-			}
-			else if (itr == 3) {  //read link cost from file 
-				string tmp = token; 
-				char const* cstr = tmp.c_str(); 
-				edges.nodeInfo[i].linkCost = atoi(cstr);   //necessary b/c cannot assume link cost less than 10
-			}			
-			itr++; 
-		}
-	}
-	typedef std::map<string, int>::iterator it_type; 
-	for (it_type it = nodePort_pair.begin(); it != nodePort_pair.end(); ++it) {
-		edges.portList.push_back(it->second);    //list of unique ports 
-	}
-	for (int i = 0; i < edges.nodeInfo.size(); i++) {
-		edges.nodeInfo[i].src_port = nodePort_pair[edges.nodeInfo[i].src_id]; 
-	}
-	return edges; 	
+    for (int i = 0; i < cnt; i++) {
+        if ((int)topology[i][0] == node_id) {
+            tableEntryRouting entry = delimitTopology(topology[i]);
+            routingTable.insert(std::pair<int, tableEntryRouting>(addr, entry));	
+            printf("%c: Dest_ip: %lu Next_ip: %lu Hop_count: %d \n", node_id, entry.destination_ip, entry.next_ip, entry.hop_count);
+        }	
+    }
 }
 
 void* run_receiver(void* threadarg)
@@ -105,14 +61,12 @@ int main(int argc, char* argv[])
         exit(-1);
     }
     string topology_fname(argv[1]);
-    // TODO: load_topology()
-    RouterData data = load_topology(topology_fname);
+    // load_topology()
+    // TODO: create routers 
     int router_count = 1;
     Router* routers[router_count];
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
-        // TODO: create routers 
-        // routers[i] = new Router();
         // For each router set it to listen in a new thread
         int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
         if (rc) {
