@@ -4,6 +4,9 @@
 #include <pthread.h>
 #include <iostream>
 #include <ostream>
+#include <sstream>
+#include <map>
+#include <arpa/inet.h>
 #include "my-router.h"
 
 using namespace std;
@@ -19,14 +22,16 @@ void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
     sender->send_message(dest_addr, dest_port, serialized_message);
 }
 
-void load_topology(string filename)
+
+RouterData load_topology(string filename)
 {
     //Node Topology: 
-    node_id = port-9935;   //results in A->F 
-    std::string tuple;  
-    std::vector<std::string> topology; 
-    std::ifstream tfile("topology.txt");
+    string tuple;  
+    vector<string> topology;     //holds each line of topology file 
+    ifstream tfile(filename.c_str());
+    
     int cnt = 0;
+    //separate the topology file into a vector of strings, each string is one line in the file 
     if(tfile.is_open()) {
         while(getline(tfile, tuple)) {
             topology.push_back(tuple); 
@@ -92,6 +97,7 @@ int main(int argc, char* argv[])
 {
     if (argc != 2) {
         cerr << "Incorrect usage!" << endl;
+        cerr << "Usage: " << endl << "router.exe <topology file>" << endl;
         exit(-1);
     }
 
@@ -103,7 +109,7 @@ int main(int argc, char* argv[])
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
         // TODO: create routers 
-        routers[i] = new Router();
+        routers[i] = new Router(data.portList[i], 2048, data.nodeInfo);
         // For each router set it to listen in a new thread
         int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
         if (rc) {
@@ -111,29 +117,11 @@ int main(int argc, char* argv[])
             exit(-1);
         }
     }
-    pthread_t thread;
-    if (strncmp(argv[1],"-r",2) == 0) {
-        printf("Matched -r\n");
-        // Create router
-        Router* receiver = new Router(5556, 2048);
-        // Run receive_message on new thread
-        int rc = pthread_create(&thread, NULL, run_receiver, (void*)receiver);
-        if (rc) {
-            perror("Unable to create thread\n");
-            exit(-1);
-        }
-    } else if (strncmp(argv[1],"-s",2) == 0) {
-        printf("Matched -s\n");
-        Router* sender = new Router(4444, 2048);
-        run_sender(sender, htonl(0x7f000001), 5555);
-    } else {
-        printf("Usage: -r for receiver or -s for sender\n");
-    }
 
     // Loop menu
     while (1) {
         cout << "Enter command:" << endl;
-        cout << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
+        cout << "Usage:" << endl << "\'L\' to list routers" << endl << "\'M\' to send a message" << endl;
         char input;
         cin >> input;
         // Handle input
@@ -145,7 +133,7 @@ int main(int argc, char* argv[])
                          }
                          break;
                      }
-                     // Send a message from source to destination router
+            // Send a message from source to destination router
             case 'M':{
                          cout << "Enter source router: " << endl;
                          int sender;
@@ -154,7 +142,7 @@ int main(int argc, char* argv[])
                          int receiver;
                          cin >> receiver;
                          // Stop the sender from listening
-                         pthread_cancel(&thread[sender]); // TODO: should I be calling this?
+                         pthread_cancel(threads[sender]); // TODO: should I be calling this?
                          int destination_port = routers[receiver]->port;
                          unsigned long destination_addr = routers[receiver]->addr;
                          routers[sender]->find_path(destination_addr, destination_port);

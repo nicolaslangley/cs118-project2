@@ -10,6 +10,19 @@
 
 using namespace std;
 
+struct Tuple {
+  string src_id;
+  string dest_id;
+  int src_port;
+  int dest_port;
+  int linkCost; 
+};
+
+struct RouterData {
+  vector<Tuple> nodeInfo;   //includes tuple for every edge in graph
+  vector<int> portList; 
+};
+
 /****************************
  * Simple router class for AODV implementation 
  * **************************/
@@ -46,7 +59,7 @@ class Router {
         map<unsigned long, tableEntryRouting> routing_table;
 
         // Constructor: sets link costs according to topology
-        Router(int port, int buf_size);
+         Router(int port, int buf_size, vector<Tuple>& data);
 
         // Send and receive AODV messages over UDP
         void send_message(unsigned long addr, int port, char* contents);
