@@ -22,20 +22,6 @@ void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
     sender->send_message(dest_addr, dest_port, serialized_message);
 }
 
-struct Tuple {
-	string src_id;
-	string dest_id; 
-	int src_port; 
-	int dest_port; 
-	int linkCost; 
-};
-
-struct RouterData {
-	vector<Tuple> nodeInfo;   //includes a tuple for every edge in the graph 
-	vector<int> portList;    //list of unique source ports 
-}; 
-
-
 void load_topology(string filename)
 {
     //Node Topology: 
@@ -120,7 +106,7 @@ int main(int argc, char* argv[])
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
         // TODO: create routers 
-        routers[i] = new Router();
+        routers[i] = new Router(data.portList[i], 2048, data.nodeInfo);
         // For each router set it to listen in a new thread
         int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
         if (rc) {
