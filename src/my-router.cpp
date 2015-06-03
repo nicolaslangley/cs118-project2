@@ -226,6 +226,10 @@ void Router::handle_request(AODVRequest* req)
             routing_table[req->originator_ip]=previousNodeCumulative;
             // }
         }
+        // else if its already in the routing_table compare the hop_counts
+        // if new hop_count is less, then overwrite old and pass on 
+
+
 
         // do something if destination_ip is in the routing_table
         if (!(routing_table.find(req->destination_ip) == routing_table.end()))
@@ -301,6 +305,10 @@ void Router::handle_request(AODVRequest* req)
     }
     else
     {
+        if(req->hop_count < routing_table[originator_ip].hop_count)
+        {
+            
+        }
         // compare rreq to cacheTableEntry and choose if hop_count lesser then 
     }
 

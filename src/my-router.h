@@ -42,6 +42,7 @@ class Router {
         struct tableEntryRouting{
             int sequence;
             unsigned long destination_ip;
+            
             unsigned long next_ip;
             int hop_count;
             bool is_neighbor;
