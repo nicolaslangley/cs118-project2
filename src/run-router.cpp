@@ -138,9 +138,11 @@ int main(int argc, char* argv[])
                          cout << "Enter source router: " << endl;
                          int sender;
                          cin >> sender;
+                         cout << "Source port: " << routers[sender]->port << endl;
                          cout << "Enter destination router: " << endl; 
                          int receiver;
                          cin >> receiver;
+                         cout << "Destination port: " << routers[receiver]->port << endl;
                          // Stop the sender from listening
                          pthread_cancel(threads[sender]); // TODO: should I be calling this?
                          int destination_port = routers[receiver]->port;

@@ -8,7 +8,7 @@ LIBS=-lpthread -lstdc++
 all: $(TARGET) $(SOURCES)
 
 $(TARGET): $(OBJECTS) 
-	$(CC) $(CFLAGS) -o -g $(TARGET) $(OBJECTS) $(LIBS)
+	$(CC) -g $(CFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
 
 clean:
 	$(RM) $(TARGET) $(OBJECTS) 
