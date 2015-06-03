@@ -160,6 +160,7 @@ int main(int argc, char* argv[])
                          pthread_cancel(threads[sender]); // TODO: should I be calling this?
                          int destination_port = routers[receiver]->port;
                          unsigned long destination_addr = routers[receiver]->addr;
+                         // TODO: block until path found 
                          routers[sender]->find_path(destination_addr, destination_port);
                          break;
                      }
