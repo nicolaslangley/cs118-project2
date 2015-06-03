@@ -186,7 +186,10 @@ void Router::send_data(unsigned long addr, int port, char* filename)
 
 void Router::find_path(unsigned long dest, int port)
 {
+    cout << "Finding best path to router at " << dest << " and " << port << endl;
     // TODO(Michael): create AODV message and send it to neighbours
+    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr),1,htonl(sender->addr),htonl(sender->addr), false);
+    send_aodv(dest, port, req_message);
 }
 
 void Router::handle_request(AODVRequest* req)
