@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <mutex>
 #include <iostream> 
 #include <fstream>
 #include <string>
@@ -27,10 +28,13 @@ struct RouterData {
  * Simple router class for AODV implementation 
  * **************************/
 class Router {
+        // Mutex for thread printing 
+        static mutex mtx;
     public:
         // Router properties
         // TODO(Frank): add variables for local link state
         //              set these in functions to be implemented below
+       
 
         int node_id; // ID for router
         int sock_fd; // Socket file descriptor
@@ -81,3 +85,5 @@ class Router {
         void print_routing_table();
         void print_cache_table();
 };
+
+

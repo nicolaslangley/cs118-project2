@@ -2,6 +2,7 @@
 // Nicolas Langley 904433991
 #include <cstring>
 #include <fstream>
+#include <sstream>
 #include <iterator>
 #include <stdio.h>
 #include <sys/types.h>
@@ -11,6 +12,9 @@
 #include "my-router.h"
 
 using namespace std;
+
+// Mutex for cout
+mutex Router::mtx;
 
 /****************************
  * Constructor sets port value and buffer size
@@ -126,25 +130,32 @@ void Router::receive_message()
     int receive_len; // Number of bytes received
 
     // Listen on socket for incoming message
+    stringstream ss;
     for (;;) {
-        printf("Waiting for message on port: %d\n", port);
+        ss.str("");
+        ss << "Waiting for message on port: " << port << endl;
+        Router::mtx.lock();
+        cout << ss.str();
+        Router::mtx.unlock();
         receive_len = recvfrom(sock_fd, buffer, buffer_size, 0, (struct sockaddr*)&remote_addr, &addr_length);
         if (receive_len > 0) {
             buffer[receive_len] = 0;
-            printf("Received %d bytes\n", receive_len);
-            printf("Text data received: %s\n", buffer);
+            ss << "Received " << receive_len << " bytes" << endl;
+            ss << "Text data received: " << buffer << endl;
             char* message = (char*)(&buffer);
             int message_type = message[0] - '0'; // TODO: this is not checked
-            cout << "Message type: " << message_type << endl;
-            printf("AODV message type is: %c\n", buffer[0]);
+            ss << "AODV message type is " << message_type << endl;
+            Router::mtx.lock();
+            cout << ss.str();
+            Router::mtx.unlock();
             if (message_type == 1) {
-                cout << "Received REQ" << endl;
+                //cout << "Received REQ" << endl;
                 // Create a new AODV request message and load serialized data
                 AODVRequest* req_message = new AODVRequest();
                 req_message->deserialize(message);
                 handle_request(req_message);
             } else if (message_type == 2) {
-                cout << "Received RREP" << endl;
+                //cout << "Received RREP" << endl;
                 // Create a new AODV response message and load serialized data
                 AODVRequest* res_message = new AODVRequest();
                 res_message->deserialize(message);
@@ -214,8 +225,10 @@ void Router::find_path(unsigned long dest, int dest_port)
 
 void Router::handle_request(AODVRequest* req)
 {
-    cout << "Handling request at " << port << endl;
-    cout << "Printing cache table begin at " << port << endl;
+    stringstream ss;
+    ss << "Handling request at " << port << endl;
+    
+    //cout << "Printing cache table begin at " << port << endl;
     print_cache_table();
     //logic needed to handle if the receiving node is the final destination
 
@@ -227,7 +240,7 @@ void Router::handle_request(AODVRequest* req)
     // do something if RREQ is not in the cache_table
     if (cache_table.find(incomingRequestKey) == cache_table.end())
     {
-        cout << "REQ not in cache table at " << port << endl;        
+        ss << "REQ not in cache table at " << port << endl;        
         tableEntryCache reqCacheEntry;
 
         reqCacheEntry.destination_ip = req->destination_ip;
@@ -324,12 +337,13 @@ void Router::handle_request(AODVRequest* req)
             //      add to tables and retransmit to all neighbors
             //      for(each neighbor in neighborlist){send AODVRequest()}
 
-            //      Generate request for each neighbor 
+            //      Generate request for each neighbor
             map<unsigned long, tableEntryRouting>::iterator it;
-            cout << "Number of neighbours: " << routing_table.size() << endl;
+            ss << "Number of neighbours: " << routing_table.size() << endl;
+
             for (it = routing_table.begin(); it != routing_table.end(); it++) {
                 if (it->second.is_neighbor) {
-                    cout << "Sending to neighbour on port " << it->first << endl;
+                    ss << "Sending to neighbour on port " << it->first << endl;
                     // We have found a neighbour
                     AODVRequest* req_message = new AODVRequest(req->originator_ip,
                                                                req->destination_ip,
@@ -337,7 +351,7 @@ void Router::handle_request(AODVRequest* req)
                                                                port,
                                                                it->first,
                                                                false);
-                    cout << "DEBUG: " << req_message->serialize() << endl;
+                    ss << "DEBUG: " << req_message->serialize() << endl;
                     // TODO: fix the port and address stuff
                     // NOTE: it->first is the port value
                     send_aodv(htonl(0x7f000001), it->first, req_message);
@@ -345,7 +359,7 @@ void Router::handle_request(AODVRequest* req)
             }
         }        
 
-        cout << "Printing cache table end at " << port << endl;
+        //cout << "Printing cache table end at " << port << endl;
         print_cache_table();
     }
     else
@@ -357,33 +371,45 @@ void Router::handle_request(AODVRequest* req)
         // compare rreq to cacheTableEntry and choose if hop_count lesser then 
     }
 
+    Router::mtx.lock();
+    cout << endl << endl << ss.str() << endl << endl;
+    Router::mtx.unlock();
 }
 
-void Router::print_routing_table() {
-
-    cout << "\nRouting Table\n";
+void Router::print_routing_table()
+{
+    stringstream ss;
+    ss << "\nRouting Table\n";
     
-    for(auto it = routing_table.cbegin(); it != routing_table.cend(); ++it)
+    map<unsigned long, tableEntryRouting>::iterator it;
+    for(it = routing_table.begin(); it != routing_table.end(); ++it)
     {
-        std::cout << "| key : " << it->first << " | destination_ip : " << it->second.destination_ip << " |  next_ip : " << it->second.next_ip <<
+        ss << "| key : " << it->first << " | destination_ip : " << it->second.destination_ip << " |  next_ip : " << it->second.next_ip <<
          " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count << " | is_neighbor : " << it->second.is_neighbor <<
         " |\n";
     }
-
-
+    Router::mtx.lock();
+    cout << ss.str();
+    Router::mtx.unlock();
 }
 
-void Router::print_cache_table(){
+void Router::print_cache_table()
+{
 
-    cout << "\nCache Table\n";
+    stringstream ss;
+    ss << "\nCache Table\n";
     
-    for(auto it = cache_table.cbegin(); it != cache_table.cend(); ++it)
+    map<pair<unsigned long, unsigned long>, tableEntryCache>::iterator it;
+    for(it = cache_table.begin(); it != cache_table.end(); ++it)
     {
-        std::cout << "| key : (" << it->first.first << "," << it->first.second << ") | destination_ip : " << it->second.destination_ip << " |  source_ip : " << it->second.source_ip <<
+        ss.str("");
+        ss << "| key : (" << it->first.first << "," << it->first.second << ") | destination_ip : " << it->second.destination_ip << " |  source_ip : " << it->second.source_ip <<
         " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count <<
         " |\n";
     }
-
+    Router::mtx.lock();
+    cout << ss.str();
+    Router::mtx.unlock();
 
 }
 
