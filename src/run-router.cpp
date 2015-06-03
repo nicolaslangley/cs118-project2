@@ -36,14 +36,15 @@ struct RouterData {
 }; 
 
 
-void load_topology(string filename)
+RouterData load_topology(string filename)
 {
     //Node Topology: 
-    node_id = port-9935;   //results in A->F 
-    std::string tuple;  
-    std::vector<std::string> topology; 
-    std::ifstream tfile("topology.txt");
+    string tuple;  
+    vector<string> topology;     //holds each line of topology file 
+    ifstream tfile(filename.c_str());
+    
     int cnt = 0;
+    //separate the topology file into a vector of strings, each string is one line in the file 
     if(tfile.is_open()) {
         while(getline(tfile, tuple)) {
             topology.push_back(tuple); 
@@ -172,7 +173,7 @@ int main(int argc, char* argv[])
                          int receiver;
                          cin >> receiver;
                          // Stop the sender from listening
-                         pthread_cancel(&thread[sender]); // TODO: should I be calling this?
+                         pthread_cancel(threads[sender]); // TODO: should I be calling this?
                          int destination_port = routers[receiver]->port;
                          unsigned long destination_addr = routers[receiver]->addr;
                          routers[sender]->find_path(destination_addr, destination_port);
