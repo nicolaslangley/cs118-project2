@@ -4,43 +4,30 @@
 #include <pthread.h>
 #include <iostream>
 #include <ostream>
-#include <sstream>
-#include <map>
-#include <arpa/inet.h>
 #include "my-router.h"
 
 using namespace std;
 
 void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
 {
-    printf("Sending message to server at address %lu on port %d\n", htonl(dest_addr), dest_port);
-    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr),1,htonl(sender->addr),htonl(sender->routerSequenceNumber));
+    printf("Sending message to server at address %u on port %d\n", htonl(dest_addr), dest_port);
+    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr),1,htonl(sender->addr),htonl(sender->addr), false);
+    // AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_rchd);
+
     AODVResponse* res_message = new AODVResponse(htonl(sender->addr), htonl(dest_addr));
     char* serialized_message = res_message->serialize();
     sender->send_message(dest_addr, dest_port, serialized_message);
 }
 
-struct Tuple {
-	string src_id;
-	string dest_id; 
-	int src_port; 
-	int dest_port; 
-	int linkCost; 
-};
-
-struct RouterData {
-	vector<Tuple> nodeInfo;   //includes a tuple for every edge in the graph 
-	vector<int> portList;    //list of unique source ports 
-}; 
-
-RouterData load_topology(string filename)
+void load_topology(string filename)
 {
-    string tuple;  
-    vector<string> topology;     //holds each line of topology file 
-    ifstream tfile(filename.c_str());
+    //Node Topology: 
+    node_id = port-9935;   //results in A->F 
+    std::string tuple;  
+    std::vector<std::string> topology; 
+    std::ifstream tfile("topology.txt");
     int cnt = 0;
-    //separate the topology file into a vector of strings, each string is one line in the file 
-    if(tfile.is_open()) {             
+    if(tfile.is_open()) {
         while(getline(tfile, tuple)) {
             topology.push_back(tuple); 
             cnt++;
