@@ -59,12 +59,13 @@ int main(int argc, char* argv[])
         exit(-1);
     }
     string topology_fname(argv[1]);
-    // load_topology()
-    // TODO: create routers 
+    // TODO: load_topology()
     int router_count = 1;
     Router* routers[router_count];
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
+        // TODO: create routers 
+        // routers[i] = new Router();
         // For each router set it to listen in a new thread
         int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
         if (rc) {
