@@ -638,7 +638,7 @@ string Router::print_routing_table()
     for(it = routing_table.begin(); it != routing_table.end(); ++it)
     {
         ss << "| key : " << it->first << " | destination_ip : " << it->second.destination_ip << " |  next_ip : " << it->second.next_ip <<
-            " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count << " | is_neighbor : " << it->second.is_neighbor <<
+            " | time_stamp : " << it->second.time_stamp << " | hop_count : " << it->second.hop_count << " | is_neighbor : " << it->second.is_neighbor <<
             " |\n";
     }
     return ss.str();
@@ -655,7 +655,7 @@ string Router::print_cache_table()
     {
         ss.str("");
         ss << "| key : (" << it->first.first << "," << it->first.second << ") | destination_ip : " << it->second.destination_ip << " |  source_ip : " << it->second.source_ip <<
-            " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count <<
+            " | time_stamp : " << it->second.time_stamp << " | hop_count : " << it->second.hop_count <<
             " |\n";
     }
     return ss.str();
