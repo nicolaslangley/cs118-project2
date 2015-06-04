@@ -15,8 +15,7 @@ Project 2: AODV}
 \maketitle
 \section{AODV Implementation Overview}
 
-The distance vector routing algorithm that we implemented was based off of AODV
-AODV stands for Ad Hoc On Demand Distance Vector.
+The distance vector routing algorithm that we implemented was based off of AODV. AODV stands for Ad Hoc On Demand Distance Vector.
 This standard provides an alternative to the Bellman-Ford algorithm commonly used to find paths in a network.
 AODV reduces overhead and network utilization by avoiding the initial network distance vector convergence process.
 Instead routers only generate routing table entries ad hoc when a route is needed.  The originating node will issue an AODVRequest which will be propagated node by node through the network. During this process backword routes are established and so as the rreq propagates outward a path from the destination to the origin is established, and when it propagates inward a route from the origin to the destination is established.  Messages are sent from one router to another, by referencing the routing tables.  If the routing table has an entry for that destination it will direct the message to the next node along the path.
@@ -33,15 +32,27 @@ where each router sends the message to the next router in the path, up until the
 \section{Path Optimization}
 Since AODV is not a convergence based protocol, the minimum cost path cannot generally be found, but path optimization techniques can still be applied.  In our implementation of AODV, during route discovery multiple paths are generated to a given node.  If these two paths converge before reaching the final destination, the covergence node will evaluate both paths and keep the one with the cheaper path.  
 
-
-\section(Route Maintenance)
+\section{Route Maintenance}
 If a link cost changes or a node is deleted the network should update its paths.  Paths in our routing tables expire after a set amount of time.  Therefore new link weights are incorporated into route discovery within said set amount of time.  Additionally, if a router is removed, references to it will be removed as they expire, and eventually it will be excluded from route discovery.  
-
-\section{Difficulties Encountered and Solutions}
-
-
 
 \section{How to Compile and Run Code}
 
+Compile the code using $make$ from the $/src$ directory. \\
+To run the code, start router.exe and pass the topology text file as argument. \\
+An interactive menu will be presented which allows for four options: 
+    \begin{enumerate}
+        \item Listing of routers
+        \item Sending of a data text message
+        \item Killing of a router
+        \item Printing of all routing tables
+    \end{enumerate} 
+This implementation works by running each router in a seperate thread and is required due to the need to on-demand compose messages according to the AODV standard \\
+
+Notes:
+\begin{itemize}
+\item The inject-data.sh and start-router.sh scripts are not used. Only the executable is required
+\item There are some C++11 features that were used for threading purposes that may not work properly and so we have supplied two versions of the source
+          Please see the folder $src-simple$ for code that is compatible with older versions of GCC
+\end{itemize}
 
 \end{document}
