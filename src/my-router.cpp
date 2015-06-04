@@ -332,8 +332,47 @@ void Router::find_path(unsigned long dest, int dest_port)
     }
 }
 
+void Router::remove_expired_entries(){
+
+    map<unsigned long,tableEntryRouting>::iterator it_1;
+    for(it_1 = routing_table.begin(); it_1 != routing_table.end();)    
+    {
+        clock_t time_entered = it_1->second.time_stamp;
+        clock_t time_current = clock(); 
+        double elapsed_secs = double(time_current - time_entered) / CLOCKS_PER_SEC;
+        if(elapsed_secs > 10)
+        {
+            routing_table.erase(it_1++);
+        }
+        else
+        {
+            ++it_1;
+        }
+    }
+
+    map<pair<unsigned long,unsigned long>,tableEntryCache>::iterator it_2;
+    for(it_2 = cache_table.begin(); it_2 != cache_table.end();)    
+    {
+        clock_t time_entered = it_2->second.time_stamp;
+        clock_t time_current = clock(); 
+        double elapsed_secs = double(time_current - time_entered) / CLOCKS_PER_SEC;
+        if(elapsed_secs > 10)
+        {
+            cache_table.erase(it_2++);
+        }
+        else
+        {
+            ++it_2;
+        }
+    }
+
+
+
+}
+
 void Router::handle_request(AODVRequest* req)
 {
+    // remove_expired_entries(); //removes expired entries from routing table
     stringstream ss;
     ss << "---------" << endl;
     ss << "Handling request at " << port << endl;
@@ -359,6 +398,7 @@ void Router::handle_request(AODVRequest* req)
         reqCacheEntry.source_ip = req->originator_ip;
         reqCacheEntry.sequence = req->originator_sequence_number;  //sequence number of source
         reqCacheEntry.hop_count = req->hop_count;
+        reqCacheEntry.time_stamp = clock();
 
         cache_table[incomingRequestKey]=reqCacheEntry;
 
@@ -374,6 +414,7 @@ void Router::handle_request(AODVRequest* req)
             previousNodeCumulative.sequence = req->destination_sequence_num;
             previousNodeCumulative.hop_count = req->hop_count;        
             previousNodeCumulative.is_neighbor = false;
+            previousNodeCumulative.time_stamp = clock();
 
             routing_table[req->originator_ip]=previousNodeCumulative;
             // }
