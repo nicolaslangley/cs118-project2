@@ -296,11 +296,22 @@ void Router::find_path(unsigned long dest, int dest_port)
     ss << "find_path()" << endl;
     ss << "---------" << endl;
     ss << "Finding best path to router at " << dest << " and " << dest_port << endl;
+    ss << print_routing_table() << endl;
+
+    Router::thread_print(ss.str());
+    ss.str("");
+    // Remove expired entries each time we look for a path
+    remove_expired_entries();
    
+    ss << print_routing_table() << endl;
+
+    Router::thread_print(ss.str());
+    ss.str("");
     if (routing_table.find(dest_port) != routing_table.end()) {
         // Path already in table so ignore
         ss << "Route already in table" << endl;
         Router::thread_print(ss.str());
+        send_data_text(htonl(0x7f000001), dest_port, queued_message);
         return;
     }
     
@@ -335,12 +346,25 @@ void Router::remove_expired_entries(){
 
     map<unsigned long,tableEntryRouting>::iterator it_1;
     for(it_1 = routing_table.begin(); it_1 != routing_table.end();) {
-        if (it_1->second.is_neighbor) continue;
-        clock_t time_entered = it_1->second.time_stamp;
-        clock_t time_current = clock(); 
-        double elapsed_secs = double(time_current - time_entered) / CLOCKS_PER_SEC;
+        if (it_1->second.is_neighbor) {
+            ++it_1;
+            continue;
+        }
+        stringstream ss;
+        ss << "Entry: " << it_1->first << endl;
+        time_t time_entered = it_1->second.time_stamp;
+        time_t time_current;
+        time(&time_current); 
+        ss << time_current << " - " << time_entered << endl;
+        double elapsed_secs = double(time_current - time_entered);
+        ss << elapsed_secs << endl;
+        Router::thread_print(ss.str());
+        ss.str("");
         if(elapsed_secs > 10)
         {
+            ss << "Removing expired entry" << endl;
+            Router::thread_print(ss.str());
+            ss.str("");
             routing_table.erase(it_1++);
         }
         else
@@ -351,9 +375,10 @@ void Router::remove_expired_entries(){
 
     map<pair<unsigned long,unsigned long>,tableEntryCache>::iterator it_2;
     for(it_2 = cache_table.begin(); it_2 != cache_table.end();) {
-        clock_t time_entered = it_2->second.time_stamp;
-        clock_t time_current = clock(); 
-        double elapsed_secs = double(time_current - time_entered) / CLOCKS_PER_SEC;
+        time_t time_entered = it_2->second.time_stamp;
+        time_t time_current;
+        time(&time_current); 
+        double elapsed_secs = double(time_current - time_entered);
         if(elapsed_secs > 10)
         {
             cache_table.erase(it_2++);
@@ -370,7 +395,8 @@ void Router::remove_expired_entries(){
 
 void Router::handle_request(AODVRequest* req)
 {
-    // remove_expired_entries(); //removes expired entries from routing table
+    remove_expired_entries(); //removes expired entries from routing table
+
     stringstream ss;
     ss << "---------" << endl;
     ss << "Handling request at " << port << endl;
@@ -396,7 +422,9 @@ void Router::handle_request(AODVRequest* req)
         reqCacheEntry.source_ip = req->originator_ip;
         reqCacheEntry.sequence = req->originator_sequence_number;  //sequence number of source
         reqCacheEntry.hop_count = req->hop_count;
-        reqCacheEntry.time_stamp = clock();
+        time_t cur_time;
+        time(&cur_time);
+        reqCacheEntry.time_stamp = cur_time;
 
         cache_table[incomingRequestKey]=reqCacheEntry;
 
@@ -412,7 +440,9 @@ void Router::handle_request(AODVRequest* req)
             previousNodeCumulative.sequence = req->destination_sequence_num;
             previousNodeCumulative.hop_count = req->hop_count;        
             previousNodeCumulative.is_neighbor = false;
-            previousNodeCumulative.time_stamp = clock();
+            time_t pcur_time;
+            time(&pcur_time);
+            previousNodeCumulative.time_stamp = pcur_time;
 
             routing_table[req->originator_ip]=previousNodeCumulative;
             // }

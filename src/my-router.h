@@ -53,7 +53,7 @@ class Router {
             int sequence;
             unsigned long destination_ip;
             unsigned long next_ip;
-            clock_t time_stamp;
+            time_t time_stamp;
             int hop_count;
             bool is_neighbor;
         };
@@ -63,7 +63,7 @@ class Router {
             unsigned long destination_ip;
             unsigned long source_ip;
             int hop_count;
-            clock_t time_stamp;
+            time_t time_stamp;
         };
 
         struct tableEntryErr{

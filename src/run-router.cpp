@@ -194,6 +194,18 @@ int main(int argc, char* argv[])
                          ss.str("");
                          int to_delete;
                          cin >> to_delete;
+                         Router* td_router = routers_map[to_delete];
+                         map<unsigned long, Router::tableEntryRouting>::iterator it;
+                         for (it = td_router->routing_table.begin(); it != td_router->routing_table.end(); it++) {
+                             if (it->second.is_neighbor) {
+                                 map<int, Router*>::iterator it2;
+                                 for (it2 = routers_map.begin(); it2 != routers_map.end(); it2++) {
+                                     if (it2->second->port == it->second.destination_ip) {
+                                        it2->second->routing_table.erase(td_router->port);
+                                     } 
+                                 }
+                             }
+                         }
                          routers_map.erase(to_delete);
                          break;
                      }
