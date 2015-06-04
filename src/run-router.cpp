@@ -108,8 +108,10 @@ int main(int argc, char* argv[])
     string topology_fname(argv[1]);
     RouterData data = load_topology(topology_fname);
     int router_count = data.portList.size();
-    Router* routers[router_count];
-    pthread_t threads[router_count];
+    //Router** routers = (Router**)malloc(router_count * sizeof(Router*));
+    //pthread_t* threads = (pthread_t*)malloc(router_count * sizeof(pthread_t));  
+    Router** routers = new Router*[router_count];
+    pthread_t* threads = new pthread_t[router_count];
     for (int i = 0; i < router_count; i++) {
         // TODO: create routers 
         routers[i] = new Router(data.portList[i], 2048, data.nodeInfo);

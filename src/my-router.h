@@ -78,8 +78,7 @@ class Router {
         // Find path from current router to destination
         void find_path(unsigned long dest, int port);
         // TODO(Frank): implement functions for loading and setting up topology
-        //              define whatever functions you want
-        tableEntryRouting delimitTopology(std::string str);	
+        //              define whatever functions you want	
         // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
         void handle_request(AODVRequest* req);
         void handle_response(AODVRequest* res);

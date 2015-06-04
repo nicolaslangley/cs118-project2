@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
 #include "my-router.h"
 
 using namespace std;
@@ -52,11 +51,12 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
     ss << "Address of router on port " << port << " is " << addr << endl;
 
     // Attempt to bind the socket to port
-    int bind_result = bind(sock_fd, (struct sockaddr*)&router_addr, sizeof(router_addr));
+    int bind_result = ::bind(sock_fd, (struct sockaddr*)&router_addr, sizeof(router_addr));
     if (bind_result < 0) {
         perror("Bind failed!");
     }
-
+    int iSetOption = 1;
+    setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&iSetOption, sizeof(iSetOption));
     ss << "Adding neighbours for " << port << endl;
     //set up neighbors 
     for (int i = 0; i < data.size(); i++) {
@@ -74,36 +74,6 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
     }
     Router::thread_print(ss.str());
 }
-
-// Parse topology string from file
-Router::tableEntryRouting Router::delimitTopology(std::string str)
-{
-    int itr = 0;
-    std::string dest = "";
-    int dest_port;
-    int linkCost; 
-    dest.append(str, 4, 5);  //where the dest_port starts/ends in topology
-    char const* cstr = dest.c_str(); 
-    dest_port = atoi(cstr);      //convert string to int
-
-    linkCost = str[10] - '0'; 
-    //if the process of obtaining ip address is completed in send_message anyway, 
-    //should the routing table just have ports? 
-    struct sockaddr_in serv_addr;  //server address info 
-    memset((char*)&serv_addr, 0, sizeof(serv_addr)); 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(dest_port);
-    int addr_length = sizeof(addr_length);
-    memcpy((void*)&serv_addr.sin_addr.s_addr, &serv_addr, addr_length);
-
-    tableEntryRouting entry;
-    entry.sequence = 0;
-    entry.hop_count = linkCost; 
-    entry.destination_ip = serv_addr.sin_addr.s_addr;
-    entry.next_ip = serv_addr.sin_addr.s_addr;
-    return entry; 
-}
-
 
 /****************************
  * Sends char* message to given address and port using UDP 
@@ -139,7 +109,10 @@ void Router::receive_message()
     // Set up receiving properties
     struct sockaddr_in remote_addr; // Remote address info
     socklen_t addr_length = sizeof(remote_addr); // Length of addresses
-    unsigned char buffer[buffer_size]; // Create the receive buffer
+    
+    char* buffer = new char[buffer_size];
+    //unsigned char* buffer = (unsigned char*)malloc(sizeof(unsigned char) * buffer_size);     
+	//unsigned char buffer[buffer_size]; // Create the receive buffer
     int receive_len; // Number of bytes received
 
     // Listen on socket for incoming message
@@ -153,7 +126,7 @@ void Router::receive_message()
             buffer[receive_len] = 0;
             ss << "Received " << receive_len << " bytes" << endl;
             ss << "Text data received: " << buffer << endl;
-            char* message = (char*)(&buffer);
+            char* message = buffer;//(char*)(&buffer);
             int message_type = message[0] - '0'; // TODO: this is not checked
             ss << "AODV message type is " << message_type << endl;
             Router::thread_print(ss.str());
