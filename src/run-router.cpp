@@ -138,7 +138,8 @@ int main(int argc, char* argv[])
             // List the routers
             case 'L':{
                          for (int i = 0; i < router_count; i++) {
-                             ss << "Router " << i << " on " << routers[i]->port << endl;  
+                             ss << "Router " << i << " on " << routers[i]->port << endl;
+                             Router::thread_print(ss.str());  
                          }
                          break;
                      }
