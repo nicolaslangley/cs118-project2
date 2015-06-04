@@ -169,10 +169,114 @@ void AODVResponse::deserialize(char* ser_data)
     istringstream(values[8]) >> lifetime;
 }
 
-bool timeElapsed(){
 
-    // clock_t start = clock (); 
-    // clock_t timeElapsed = ( clock() - start ) / CLOCKS_PER_SEC;
-    return true; 
+AODVError::AODVError()
+{
+    type = 3
+}
+
+AODVError::AODVError(unsigned long orig_ip, unsigned long dest_ip);
+{
+    type = 3;
+    originator_ip = orig_ip;
+    destination_ip = dest_ip;
+}
+
+/****************************
+ * Serialize the data in the message
+ * Returns a char* consisting of comma seperated values
+ * TODO: add more values to serialization - if necessary 
+ * **************************/
+char* AODVError::serialize()
+{
+    printf("Serializing...\n");
+    // Store all of the values in a string
+    stringstream ss;
+    ss << type << ",";
+    ss << originator_ip << ",";
+    ss << destination_ip;
+    string res = ss.str();
+    // Write to char* output - non-const 
+    char* result = new char[res.size() + 1];
+    copy(res.begin(), res.end(), result);
+    result[res.size()] = '\0';
+    return result;
+}
+
+/****************************
+ * Deserialize data and populate message fields 
+ * Does not perform any checks on the input char* - trusts caller
+ * TODO: set values according to what is serialized - make sure it is in sync 
+ * **************************/
+void AODVError::deserialize(char* ser_data)
+{
+    // Parse serialized values into vector
+    vector<string> values;
+    istringstream ss(ser_data);
+    while (!ss.eof())       
+    {
+        string x; 
+        getline(ss, x, ','); 
+        values.push_back(x);
+    }
+    // Write values into message fields
+    istringstream(values[0]) >> type;
+    istringstream(values[1]) >> originator_ip;
+    istringstream(values[2]) >> destination_ip;
+}
+
+AODVAck::AODVAck()
+{
+    type = 5
+}
+
+AODVAck::AODVAck(unsigned long orig_ip, unsigned long dest_ip);
+{
+    type = 5;
+    originator_ip = orig_ip;
+    destination_ip = dest_ip;
+
+}
+
+/****************************
+ * Serialize the data in the message
+ * Returns a char* consisting of comma seperated values
+ * TODO: add more values to serialization - if necessary 
+ * **************************/
+char* AODVAck::serialize()
+{
+    printf("Serializing...\n");
+    // Store all of the values in a string
+    stringstream ss;
+    ss << type << ",";
+    ss << originator_ip << ",";
+    string res = ss.str();
+    // Write to char* output - non-const 
+    char* result = new char[res.size() + 1];
+    copy(res.begin(), res.end(), result);
+    result[res.size()] = '\0';
+    return result;
+}
+
+/****************************
+ * Deserialize data and populate message fields 
+ * Does not perform any checks on the input char* - trusts caller
+ * TODO: set values according to what is serialized - make sure it is in sync 
+ * **************************/
+void AODVAck::deserialize(char* ser_data)
+{
+    // Parse serialized values into vector
+    vector<string> values;
+    istringstream ss(ser_data);
+    while (!ss.eof())       
+    {
+        string x; 
+        getline(ss, x, ','); 
+        values.push_back(x);
+    }
+    // Write values into message fields
+    istringstream(values[0]) >> type;
+    istringstream(values[1]) >> originator_ip;
+    istringstream(values[2]) >> destination_ip;
 }
 
