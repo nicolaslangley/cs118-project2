@@ -173,39 +173,43 @@ void Router::receive_message()
                 // Create a new AODV request message and load serialized data
                 AODVRequest* req_message = new AODVRequest();
                 req_message->deserialize(message);
-                AODVAck* ack = new AODVAck(port, req_message->originator_ip);
-                send_message(htonl(0x7f000001), req_message->originator_ip, ack->serialize()); 
+                //AODVAck* ack = new AODVAck(port, req_message->originator_ip);
+                //send_message(htonl(0x7f000001), req_message->originator_ip, ack->serialize());
                 handle_request(req_message);
             } else if (message_type == 2) {
                 //cout << "Received RREP" << endl;
                 // Create a new AODV response message and load serialized data
                 AODVRequest* res_message = new AODVRequest();
                 res_message->deserialize(message);
-                AODVAck* ack = new AODVAck(port, res_message->originator_ip);
-                send_message(htonl(0x7f000001), res_message->originator_ip, ack->serialize()); 
+                //AODVAck* ack = new AODVAck(port, res_message->originator_ip);
+                //send_message(htonl(0x7f000001), res_message->originator_ip, ack->serialize());
                 handle_response(res_message);
-            } 
-			else if (message_type == 4) {   //forward message to next port
+            } else if (message_type == 4) {   //forward message to next port
 				vector <string> values;    //values[0] = message_type 
-				int commaCnt = 0;  	//values[1] = dest_port    values[2] = actual data    
+				int commaCnt = 0;  	//values[1] = final port    values[2] = data message
 				int c = 0;
 				while (message[c] != '\0') {
-					if (message[c] != ',' || commaCnt >= 3) 
+					if (message[c] != ',' || commaCnt >= 2)
 						values[commaCnt] += message[c];
-					else if (commaCnt < 3)
+					else if (commaCnt <= 2)
 						commaCnt++; 
 					c++; 
 				}
-				char const* finalPortC = values[2].c_str();   
+                char const* finalPortC = values[1].c_str();
 				unsigned long finalPortNum = (unsigned long)atoi(finalPortC);   //final node 
-				tableEntryRouting tmp = routing_table[finalPortNum];    //look up node
-				string finalPortandData = values[2];      
+                //message to send: type, final port, data message
+				string finalPortandData = "4,";
+                finalPortandData += values[2];
+                finalPortandData += ",";
 				finalPortandData += values[3];    //send final port and data together
 
-				char* message = new char[finalPortandData.size() + 1];
-				copy(finalPortandData.begin(), finalPortandData.end(), message);
-				message[finalPortandData.size()] = '\0'; 
-				
+				char* packet = new char[finalPortandData.size() + 1];
+				copy(finalPortandData.begin(), finalPortandData.end(), packet);
+				packet[finalPortandData.size()] = '\0';
+                
+        
+                tableEntryRouting tmp = routing_table[finalPortNum];
+                
 				//send_data (address, next node, final node, data) 
 				send_data_text(htonl(0x7f000001), tmp.next_ip, message); 
 							//ip             next router    final port value, and data
@@ -215,22 +219,6 @@ void Router::receive_message()
                 AODVError* err = new AODVError();
                 err->deserialize(message);
                 handle_error(err);
-            } else if (message_type == 4) {   //forward message to next port
-                vector <string> values;    //values[0] = message_type 
-                int commaCnt = 0;  	//values[1] = dest_port    values[2] = actual data    
-                int c = 0;
-                while (message[c] != '\0') {
-                    if (message[c] != ',' || commaCnt >= 3) 
-                        values[commaCnt] += message[c];
-                    else if (commaCnt <2)
-                        commaCnt++; 
-                    c++; 
-                }
-                char const* portC = values[1].c_str();   
-                unsigned long portNum = (unsigned long)atoi(portC);   //final node 
-                tableEntryRouting tmp = routing_table[portNum]; 
-                //send_data (address, next node, final node, data) 
-                //send_data(htonl(0x7f000001), tmp.next_ip, portNum, values[2]); 
             } else if (message_type == 5) {
                 // Handle ack
                 AODVAck* ack = new AODVAck();

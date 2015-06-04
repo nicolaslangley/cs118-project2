@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
         ss << "Usage:" << endl;
         ss << "\'L\' to list routers" << endl;
         ss << "\'M\' to send a message" << endl;
-        ss << "\'D\' to kill a router" << endl;
+        ss << "\'K\' to kill a router" << endl;
         ss << "\'P\' to print all routing tables" << endl;
         ss << "====================" << endl; 
         Router::thread_print(ss.str());
@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
                          }
                          break;
                      }
-            case 'D':{
+            case 'K':{
                          ss << "---------" << endl;
                          ss << "Enter router to delete: " << endl;
                          Router::thread_print(ss.str());
@@ -179,7 +179,6 @@ int main(int argc, char* argv[])
                          int to_delete;
                          cin >> to_delete;
                          routers_map.erase(to_delete);
-                         // TODO: delete the node from list
                          break;
                      }
             case 'P':{
