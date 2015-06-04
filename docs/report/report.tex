@@ -31,7 +31,11 @@ After finding a complete path, we may attempt to send a message along the path. 
 where each router sends the message to the next router in the path, up until the destination router has been reached. 
 
 \section{Path Optimization}
+Since AODV is not a convergence based protocol, the minimum cost path cannot generally be found, but path optimization techniques can still be applied.  In our implementation of AODV, during route discovery multiple paths are generated to a given node.  If these two paths converge before reaching the final destination, the covergence node will evaluate both paths and keep the one with the cheaper path.  
 
+
+\section(Route Maintenance)
+If a link cost changes or a node is deleted the network should update its paths.  Paths in our routing tables expire after a set amount of time.  Therefore new link weights are incorporated into route discovery within said set amount of time.  Additionally, if a router is removed, references to it will be removed as they expire, and eventually it will be excluded from route discovery.  
 
 \section{Difficulties Encountered and Solutions}
 
