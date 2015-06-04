@@ -495,7 +495,7 @@ void Router::handle_request(AODVRequest* req)
                     // We have found a neighbour
                     AODVRequest* req_message = new AODVRequest(req->originator_ip,
                             req->destination_ip,
-                            1,
+                            req->hop_count+1,
                             port,
                             it->first,
                             false);
