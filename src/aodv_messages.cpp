@@ -172,10 +172,10 @@ void AODVResponse::deserialize(char* ser_data)
 
 AODVError::AODVError()
 {
-    type = 3
+    type = 3;
 }
 
-AODVError::AODVError(unsigned long orig_ip, unsigned long dest_ip);
+AODVError::AODVError(unsigned long orig_ip, unsigned long dest_ip)
 {
     type = 3;
     originator_ip = orig_ip;
@@ -227,10 +227,10 @@ void AODVError::deserialize(char* ser_data)
 
 AODVAck::AODVAck()
 {
-    type = 5
+    type = 5;
 }
 
-AODVAck::AODVAck(unsigned long orig_ip, unsigned long dest_ip);
+AODVAck::AODVAck(unsigned long orig_ip, unsigned long dest_ip)
 {
     type = 5;
     originator_ip = orig_ip;

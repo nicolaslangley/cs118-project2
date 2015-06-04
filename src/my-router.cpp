@@ -184,6 +184,32 @@ void Router::receive_message()
                 AODVAck* ack = new AODVAck(port, res_message->originator_ip);
                 send_message(htonl(0x7f000001), res_message->originator_ip, ack->serialize()); 
                 handle_response(res_message);
+            } 
+			else if (message_type == 4) {   //forward message to next port
+				vector <string> values;    //values[0] = message_type 
+				int commaCnt = 0;  	//values[1] = dest_port    values[2] = actual data    
+				int c = 0;
+				while (message[c] != '\0') {
+					if (message[c] != ',' || commaCnt >= 3) 
+						values[commaCnt] += message[c];
+					else if (commaCnt < 3)
+						commaCnt++; 
+					c++; 
+				}
+				char const* finalPortC = values[2].c_str();   
+				unsigned long finalPortNum = (unsigned long)atoi(finalPortC);   //final node 
+				tableEntryRouting tmp = routing_table[finalPortNum];    //look up node
+				string finalPortandData = values[2];      
+				finalPortandData += values[3];    //send final port and data together
+
+				char* message = new char[finalPortandData.size() + 1];
+				copy(finalPortandData.begin(), finalPortandData.end(), message);
+				message[finalPortandData.size()] = '\0'; 
+				
+				//send_data (address, next node, final node, data) 
+				send_data_text(htonl(0x7f000001), tmp.next_ip, message); 
+							//ip             next router    final port value, and data
+                // TODO: determine if message was an RERR or data
             } else if (message_type == 3) {
                 // Handle error message
                 AODVError* err = new AODVError();
@@ -204,7 +230,7 @@ void Router::receive_message()
                 unsigned long portNum = (unsigned long)atoi(portC);   //final node 
                 tableEntryRouting tmp = routing_table[portNum]; 
                 //send_data (address, next node, final node, data) 
-                send_data(htonl(0x7f000001), tmp.next_ip, portNum, values[2]); 
+                //send_data(htonl(0x7f000001), tmp.next_ip, portNum, values[2]); 
             } else if (message_type == 5) {
                 // Handle ack
                 AODVAck* ack = new AODVAck();
