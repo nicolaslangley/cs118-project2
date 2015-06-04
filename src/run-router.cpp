@@ -148,23 +148,23 @@ int main(int argc, char* argv[])
                          ss.str("");
                          int sender;
                          cin >> sender;
-                         ss << "Source port: " << routers[sender]->port << endl;
+                         ss << "Source port: " << routers_map[sender]->port << endl;
                          ss << "Enter destination router: " << endl; 
                          Router::thread_print(ss.str());
                          ss.str("");
                          int receiver;
                          cin >> receiver;
-                         ss << "Destination port: " << routers[receiver]->port << endl;
+                         ss << "Destination port: " << routers_map[receiver]->port << endl;
                          ss << "---------" << endl << endl;
                          Router::thread_print(ss.str());
                          // Stop the sender from listening by killing thread
                          pthread_cancel(threads[sender]); 
-                         int destination_port = routers[receiver]->port;
-                         unsigned long destination_addr = routers[receiver]->addr;
+                         int destination_port = routers_map[receiver]->port;
+                         unsigned long destination_addr = routers_map[receiver]->addr;
                          // TODO: block until path found 
-                         routers[sender]->find_path(destination_addr, destination_port);
+                         routers_map[sender]->find_path(destination_addr, destination_port);
 
-                         int rc = pthread_create(&threads[sender], NULL, run_receiver, (void*)routers[sender]);
+                         int rc = pthread_create(&threads[sender], NULL, run_receiver, (void*)routers_map[sender]);
                          if (rc) {
                              perror("Unable to create thread\n");
                              exit(-1);
