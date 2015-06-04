@@ -11,18 +11,8 @@
 
 using namespace std;
 
-void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
-{
-    printf("Sending message to server at address %u on port %d\n", htonl(dest_addr), dest_port);
-    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr),1,htonl(sender->addr),htonl(sender->addr), false);
-    // AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_rchd);
 
-    AODVResponse* res_message = new AODVResponse(htonl(sender->addr), htonl(dest_addr));
-    char* serialized_message = res_message->serialize();
-    sender->send_message(dest_addr, dest_port, serialized_message);
-}
-
-
+// Load node topology file
 RouterData load_topology(string filename)
 {
     //Node Topology: 
@@ -108,13 +98,15 @@ int main(int argc, char* argv[])
     string topology_fname(argv[1]);
     RouterData data = load_topology(topology_fname);
     int router_count = data.portList.size();
+    // TODO: make this a vector?
+    map<int, Router*> routers_map;
     Router* routers[router_count];
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
-        // TODO: create routers 
-        routers[i] = new Router(data.portList[i], 2048, data.nodeInfo);
+        Router* router = new Router(data.portList[i], 2048, data.nodeInfo);
+        routers_map[i] = router;
         // For each router set it to listen in a new thread
-        int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
+        int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)router);
         if (rc) {
             perror("Unable to create thread\n");
             exit(-1);
@@ -126,7 +118,11 @@ int main(int argc, char* argv[])
         ss.str("");
         ss << "====================" << endl << "       MENU" << endl << "====================" << endl;
         ss << "Enter command:" << endl;
-        ss << "Usage:" << endl << "\'L\' to list routers" << endl << "\'M\' to send a message" << endl;
+        ss << "Usage:" << endl;
+        ss << "\'L\' to list routers" << endl;
+        ss << "\'M\' to send a message" << endl;
+        ss << "\'D\' to kill a router" << endl;
+        ss << "\'P\' to print all routing tables" << endl;
         ss << "====================" << endl; 
         Router::thread_print(ss.str());
         ss.str("");
@@ -137,13 +133,16 @@ int main(int argc, char* argv[])
         switch (input) {
             // List the routers
             case 'L':{
-                         for (int i = 0; i < router_count; i++) {
-                             ss << "Router " << i << " on " << routers[i]->port << endl;  
+                         map<int, Router*>::iterator it;
+                         for (it = routers_map.begin(); it != routers_map.end(); it++) {
+                             ss << "Router " << it->first << " on " << it->second->port << endl;
+                             Router::thread_print(ss.str());  
                          }
                          break;
                      }
             // Send a message from source to destination router
             case 'M':{
+                         ss << "---------" << endl;
                          ss << "Enter source router: " << endl;
                          Router::thread_print(ss.str());
                          ss.str("");
@@ -156,12 +155,44 @@ int main(int argc, char* argv[])
                          int receiver;
                          cin >> receiver;
                          ss << "Destination port: " << routers[receiver]->port << endl;
-                         // Stop the sender from listening
-                         pthread_cancel(threads[sender]); // TODO: should I be calling this?
+                         ss << "---------" << endl << endl;
+                         Router::thread_print(ss.str());
+                         // Stop the sender from listening by killing thread
+                         pthread_cancel(threads[sender]); 
                          int destination_port = routers[receiver]->port;
                          unsigned long destination_addr = routers[receiver]->addr;
                          // TODO: block until path found 
                          routers[sender]->find_path(destination_addr, destination_port);
+
+                         int rc = pthread_create(&threads[sender], NULL, run_receiver, (void*)routers[sender]);
+                         if (rc) {
+                             perror("Unable to create thread\n");
+                             exit(-1);
+                         }
+                         break;
+                     }
+            case 'D':{
+                         ss << "---------" << endl;
+                         ss << "Enter router to delete: " << endl;
+                         Router::thread_print(ss.str());
+                         ss.str("");
+                         int to_delete;
+                         cin >> to_delete;
+                         routers_map.erase(to_delete);
+                         // TODO: delete the node from list
+                         break;
+                     }
+            case 'P':{
+                         ss << "---------" << endl;
+                         ss << "Printing routing tables..." << endl;
+                         Router::thread_print(ss.str());
+                         ss.str("");
+                         map<int, Router*>::iterator it;
+                         for (it = routers_map.begin(); it != routers_map.end(); it++) {
+                             ss << "Router " << it->first << " on " << it->second->port << endl;
+                             ss << it->second->print_routing_table() << endl;
+                         }
+                         Router::thread_print(ss.str());  
                          break;
                      }
             default:{
@@ -169,6 +200,5 @@ int main(int argc, char* argv[])
                         ss << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
                     }
         }
-        Router::thread_print(ss.str());
     }
 }

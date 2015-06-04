@@ -87,6 +87,7 @@ class Router {
         // Wrappers for sending aodv messages and data
         void send_aodv(unsigned long addr, int port, AODVMessage* message);
         void send_data(unsigned long addr, int port, char* filename);
+        void send_data_text(unsigned long addr, int port, char* text);
         
         // Find path from current router to destination
         void find_path(unsigned long dest, int port);
@@ -100,7 +101,7 @@ class Router {
 
         void message_not_acknowledged();
         void acknowledge_message();
-
+        void handle_ack(AODVAck* ack);
         string print_routing_table();
         string print_cache_table();
 };
