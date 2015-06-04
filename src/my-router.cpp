@@ -17,6 +17,8 @@ using namespace std;
 // Mutex for thread printing
 mutex Router::mtx;
 
+bool Router::display_menu;
+
 // Static thread_print function
 void Router::thread_print(string input)
 {
@@ -286,12 +288,22 @@ void Router::send_data(unsigned long addr, int port, char* filename)
 
 void Router::find_path(unsigned long dest, int dest_port)
 {
+    // Don't display menu until path is found
+    Router::display_menu = false;
+
     stringstream ss;
     ss << "---------" << endl;
     ss << "find_path()" << endl;
     ss << "---------" << endl;
     ss << "Finding best path to router at " << dest << " and " << dest_port << endl;
-    // TODO(Michael): create AODV message and send it to neighbours
+   
+    if (routing_table.find(dest_port) != routing_table.end()) {
+        // Path already in table so ignore
+        ss << "Route already in table" << endl;
+        Router::thread_print(ss.str());
+        return;
+    }
+    
     map<unsigned long, tableEntryRouting>::iterator it;
     ss << "Number of neighbours: " << routing_table.size() << endl;
     for (it = routing_table.begin(); it != routing_table.end(); it++) {
@@ -447,6 +459,10 @@ void Router::handle_request(AODVRequest* req)
         if (is_dest && is_rrep)
         {
             ss << print_routing_table();
+            Router::thread_print(ss.str());
+            ss.str("");
+            send_data_text(htonl(0x7f000001), req->originator_ip, queued_message);
+            Router::display_menu = true;
             //      Route complete.
         }
         else if (is_dest && !is_rrep)

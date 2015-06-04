@@ -112,20 +112,23 @@ int main(int argc, char* argv[])
             exit(-1);
         }
     }
-
+    
+    Router::display_menu = true;
     // Loop menu
     while (1) {
-        ss.str("");
-        ss << "====================" << endl << "       MENU" << endl << "====================" << endl;
-        ss << "Enter command:" << endl;
-        ss << "Usage:" << endl;
-        ss << "\'L\' to list routers" << endl;
-        ss << "\'M\' to send a message" << endl;
-        ss << "\'K\' to kill a router" << endl;
-        ss << "\'P\' to print all routing tables" << endl;
-        ss << "====================" << endl; 
-        Router::thread_print(ss.str());
-        ss.str("");
+        if (1) {
+            ss.str("");
+            ss << "====================" << endl << "       MENU" << endl << "====================" << endl;
+            ss << "Enter command:" << endl;
+            ss << "Usage:" << endl;
+            ss << "\'L\' to list routers" << endl;
+            ss << "\'M\' to send a message" << endl;
+            ss << "\'K\' to kill a router" << endl;
+            ss << "\'P\' to print all routing tables" << endl;
+            ss << "====================" << endl;
+            Router::thread_print(ss.str());
+            ss.str("");
+        }
 
         char input;
         cin >> input;
@@ -144,6 +147,12 @@ int main(int argc, char* argv[])
                      // Send a message from source to destination router
             case 'M':{
                          ss << "---------" << endl;
+                         ss << "Enter message to send: " << endl;
+                         Router::thread_print(ss.str());
+                         ss.str("");  
+                         string message_input;
+                         cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                         getline(cin, message_input);
                          ss << "Enter source router: " << endl;
                          Router::thread_print(ss.str());
                          ss.str("");
@@ -158,11 +167,17 @@ int main(int argc, char* argv[])
                          ss << "Destination port: " << routers_map[receiver]->port << endl;
                          ss << "---------" << endl << endl;
                          Router::thread_print(ss.str());
+
                          // Stop the sender from listening by killing thread
                          pthread_cancel(threads[sender]); 
                          int destination_port = routers_map[receiver]->port;
                          unsigned long destination_addr = routers_map[receiver]->addr;
-                         // TODO: block until path found 
+                         
+                         // Queue data to be sent after the path
+                         char* data_message = new char[message_input.size() + 1];
+                         copy(message_input.begin(), message_input.end(), data_message);
+                         data_message[message_input.size()] = '\0';
+                         routers_map[sender]->queued_message = data_message; 
                          routers_map[sender]->find_path(destination_addr, destination_port);
 
                          int rc = pthread_create(&threads[sender], NULL, run_receiver, (void*)routers_map[sender]);
@@ -196,34 +211,13 @@ int main(int argc, char* argv[])
                          break;
                      }
             case 'D':{
-                         ss << "---------" << endl;
-                         ss << "Enter message to send: " << endl;
-                         Router::thread_print(ss.str());
-                         ss.str("");  
-                         string message_input;
-                         cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                         getline(cin, message_input);
-                         ss << "Enter source router: " << endl;
-                         Router::thread_print(ss.str());
-                         ss.str("");
-                         int sender;
-                         cin >> sender;
-                         ss << "Source port: " << routers_map[sender]->port << endl;
-                         ss << "Enter destination router: " << endl; 
-                         Router::thread_print(ss.str());
-                         ss.str("");
-                         int receiver;
-                         cin >> receiver;
-                         ss << "Destination port: " << routers_map[receiver]->port << endl;
-                         ss << "---------" << endl << endl;
-                         Router::thread_print(ss.str());
                          // Convert string message to char*
-                         char* data_message = new char[message_input.size() + 1];
-                         copy(message_input.begin(), message_input.end(), data_message);
-                         data_message[message_input.size()] = '\0';
-                         
-                         routers_map[sender]->send_data_text(htonl(0x7f000001), routers_map[receiver]->port, data_message);
-                         break;
+                         //char* data_message = new char[message_input.size() + 1];
+                         //copy(message_input.begin(), message_input.end(), data_message);
+                         //data_message[message_input.size()] = '\0';
+                         //
+                         //routers_map[sender]->send_data_text(htonl(0x7f000001), routers_map[receiver]->port, data_message);
+                         //break;
                      }
             default:{
                         ss << "Invalid usage!" << endl;
