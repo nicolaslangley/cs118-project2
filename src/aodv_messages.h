@@ -85,6 +85,32 @@ class AODVResponse: public AODVMessage
  * **************************/
 class AODVError: public AODVMessage
 {
-    bool no_delete_flag;
-    int dest_count; // Number of unreacheable destinations
+public:
+    unsigned long destination_ip;
+    unsigned long originator_ip;
+    AODVError();
+    AODVError(unsigned long orig_ip, unsigned long dest_ip);
+    // Serialization functions
+    char* serialize();
+    void deserialize(char* ser_data);
 };
+
+class AODVAck: public AODVMessage
+{
+public:
+    unsigned long destination_ip;
+    unsigned long originator_ip;
+    AODVAck();
+    AODVAck(unsigned long orig_ip, unsigned long dest_ip);
+    char* serialize();
+    void deserialize(char* ser_data);
+};
+
+
+
+
+
+
+
+
+
