@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iterator>
 #include <stdio.h>
+#include <ctime>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -124,9 +125,15 @@ void Router::send_message(unsigned long addr, int dest_port, char* contents)
 
     // Send contents to destination 
     int sendto_result = sendto(sock_fd, contents, strlen(contents), 0, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+
     if (sendto_result < 0) {
         perror("Sending to server failed!");
     }
+
+    // Update transmission table
+    time_t cur_time;
+    time(&cur_time);
+    transmission_table[dest_port] = cur_time;
 }
 
 /****************************
@@ -166,12 +173,16 @@ void Router::receive_message()
                 // Create a new AODV request message and load serialized data
                 AODVRequest* req_message = new AODVRequest();
                 req_message->deserialize(message);
+                AODVAck* ack = new AODVAck(port, req_message->originator_ip);
+                send_message(htonl(0x7f000001), req_message->originator_ip, ack->serialize()); 
                 handle_request(req_message);
             } else if (message_type == 2) {
                 //cout << "Received RREP" << endl;
                 // Create a new AODV response message and load serialized data
                 AODVRequest* res_message = new AODVRequest();
                 res_message->deserialize(message);
+                AODVAck* ack = new AODVAck(port, res_message->originator_ip);
+                send_message(htonl(0x7f000001), res_message->originator_ip, ack->serialize()); 
                 handle_response(res_message);
             } 
 			else if (message_type == 4) {   //forward message to next port
@@ -186,13 +197,13 @@ void Router::receive_message()
 					c++; 
 				}
 				char const* finalPortC = values[2].c_str();   
-				unsigned long finalPortNum = (unsigned long)atoi(portC);   //final node 
+				unsigned long finalPortNum = (unsigned long)atoi(finalPortC);   //final node 
 				tableEntryRouting tmp = routing_table[finalPortNum];    //look up node
 				string finalPortandData = values[2];      
 				finalPortandData += values[3];    //send final port and data together
 
 				char* message = new char[finalPortandData.size() + 1];
-				copy(str.begin(), str.end(), message);
+				copy(finalPortandData.begin(), finalPortandData.end(), message);
 				message[finalPortandData.size()] = '\0'; 
 				
 				//send_data (address, next node, final node, data) 
@@ -201,13 +212,15 @@ void Router::receive_message()
                 // TODO: determine if message was an RERR or data
             } else if (message_type == 3) {
                 // Handle error message
-            }
+                AODVError* err = new AODVError();
+                err->deserialize(message);
+                handle_error(err);
             } else if (message_type == 4) {   //forward message to next port
                 vector <string> values;    //values[0] = message_type 
                 int commaCnt = 0;  	//values[1] = dest_port    values[2] = actual data    
                 int c = 0;
                 while (message[c] != '\0') {
-                    if (message[c] != ',' || commaCnt >= ) 
+                    if (message[c] != ',' || commaCnt >= 3) 
                         values[commaCnt] += message[c];
                     else if (commaCnt <2)
                         commaCnt++; 
@@ -217,9 +230,12 @@ void Router::receive_message()
                 unsigned long portNum = (unsigned long)atoi(portC);   //final node 
                 tableEntryRouting tmp = routing_table[portNum]; 
                 //send_data (address, next node, final node, data) 
-                send_data(htonl(0x7f000001), tmp.next_ip, portNum, values[2]); 
+                //send_data(htonl(0x7f000001), tmp.next_ip, portNum, values[2]); 
             } else if (message_type == 5) {
                 // Handle ack
+                AODVAck* ack = new AODVAck();
+                ack->deserialize(message);
+                handle_ack(ack);
             }
         }
     }
@@ -626,6 +642,11 @@ void Router::handle_error(AODVError* err)
         routing_table.erase(err->destination_ip);
     }
 
+}
+
+void Router::handle_ack(AODVAck* ack)
+{
+    transmission_table.erase(ack->originator_ip);
 }
 
         //send err messages to neighbors

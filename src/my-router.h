@@ -1,6 +1,7 @@
 #include "aodv_messages.h"
 #include <map>
 #include <stdio.h>
+#include <ctime>
 #include <stdlib.h>
 #include <errno.h>
 #include <mutex>
@@ -75,7 +76,7 @@ class Router {
         map< pair<unsigned long, unsigned long>, tableEntryCache> cache_table;  //key is source_ip,destination_ip
         map<unsigned long, tableEntryRouting> routing_table;
         map< pair<unsigned long, unsigned long>, tableEntryErr> err_table;
-        map<unsigned long, tableEntryTransmission> transmission_table;
+        map<unsigned long, time_t> transmission_table;
 
         // Constructor: sets link costs according to topology
          Router(int port, int buf_size, vector<Tuple>& data);
