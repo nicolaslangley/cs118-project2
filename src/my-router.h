@@ -84,6 +84,8 @@ class Router {
         // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
         void handle_request(AODVRequest* req);
         void handle_response(AODVRequest* res);
+        void handle_error(AODVRequest* err);
+        void handle_ack(AODVAck* ack);
         string print_routing_table();
         string print_cache_table();
 };

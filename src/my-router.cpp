@@ -173,8 +173,28 @@ void Router::receive_message()
                 AODVRequest* res_message = new AODVRequest();
                 res_message->deserialize(message);
                 handle_response(res_message);
-            } else {
-                // TODO: determine if message was an RERR or data
+            } else if (message_type == 3) {
+                // Handle error message
+            
+            } else if (message_type == 4) {   //forward message to next port
+                vector <string> values;    //values[0] = message_type 
+                int commaCnt = 0;  	//values[1] = dest_port    values[2] = actual data    
+                int c = 0;
+                while (message[c] != '\0') {
+                    if (message[c] != ',' || commaCnt >= ) 
+                        values[commaCnt] += message[c];
+                    else if (commaCnt <2)
+                        commaCnt++; 
+                    c++; 
+                }
+                char const* portC = values[1].c_str();   
+                unsigned long portNum = (unsigned long)atoi(portC);   //final node 
+                tableEntryRouting tmp = routing_table[portNum]; 
+                //send_data (address, next node, final node, data) 
+                send_data(htonl(0x7f000001), tmp.next_ip, portNum, values[2]); 
+            } else if (message_type == 5) {
+                // Handle ack
+
             }
         }
     }
@@ -199,7 +219,7 @@ void Router::send_data_text(unsigned long addr, int port, char* text)
 
     stringstream ss;
     ss << "4" << "," << port << "," << text;
-    
+
     string str = ss.str();
     char* message = new char[str.size() + 1];
     copy(str.begin(), str.end(), message);
@@ -255,7 +275,7 @@ void Router::find_path(unsigned long dest, int dest_port)
             ss << "---------" << endl << endl;
             Router::thread_print(ss.str());
             // TODO: fix the port and address stuff
-            
+
             // Adding initial message to cache table 
             pair<unsigned long,unsigned long> incomingRequestKey = make_pair(req_message->originator_ip,req_message->destination_ip);
             tableEntryCache originCacheEntry;
@@ -278,7 +298,7 @@ void Router::handle_request(AODVRequest* req)
     ss << "Handling request at " << port << endl;
     ss << req->serialize() << endl;
     ss << "---------" << endl;
-    
+
     //cout << "Printing cache table begin at " << port << endl;
     // ss << print_cache_table();
     //logic needed to handle if the receiving node is the final destination
@@ -406,11 +426,11 @@ void Router::handle_request(AODVRequest* req)
                     ss << "Sending to neighbour on port " << it->first << endl;
                     // We have found a neighbour
                     AODVRequest* req_message = new AODVRequest(req->originator_ip,
-                                                               req->destination_ip,
-                                                               1,
-                                                               port,
-                                                               it->first,
-                                                               false);
+                            req->destination_ip,
+                            1,
+                            port,
+                            it->first,
+                            false);
                     ss << "DEBUG: " << req_message->serialize() << endl;
                     ss << "---------" << endl << endl;
                     // TODO: fix the port and portess stuff
@@ -439,13 +459,13 @@ string Router::print_routing_table()
 {
     stringstream ss;
     ss << "\nRouting Table\n";
-    
+
     map<unsigned long, tableEntryRouting>::iterator it;
     for(it = routing_table.begin(); it != routing_table.end(); ++it)
     {
         ss << "| key : " << it->first << " | destination_ip : " << it->second.destination_ip << " |  next_ip : " << it->second.next_ip <<
-         " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count << " | is_neighbor : " << it->second.is_neighbor <<
-        " |\n";
+            " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count << " | is_neighbor : " << it->second.is_neighbor <<
+            " |\n";
     }
     return ss.str();
 }
@@ -455,14 +475,14 @@ string Router::print_cache_table()
 
     stringstream ss;
     ss << "\nCache Table\n";
-    
+
     map<pair<unsigned long, unsigned long>, tableEntryCache>::iterator it;
     for(it = cache_table.begin(); it != cache_table.end(); ++it)
     {
         ss.str("");
         ss << "| key : (" << it->first.first << "," << it->first.second << ") | destination_ip : " << it->second.destination_ip << " |  source_ip : " << it->second.source_ip <<
-        " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count <<
-        " |\n";
+            " | sequence : " << it->second.sequence << " | hop_count : " << it->second.hop_count <<
+            " |\n";
     }
     return ss.str();
 

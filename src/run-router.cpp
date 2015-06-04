@@ -99,12 +99,14 @@ int main(int argc, char* argv[])
     RouterData data = load_topology(topology_fname);
     int router_count = data.portList.size();
     // TODO: make this a vector?
+    map<int, Router*> routers_map;
     Router* routers[router_count];
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
-        routers[i] = new Router(data.portList[i], 2048, data.nodeInfo);
+        Router* router = new Router(data.portList[i], 2048, data.nodeInfo);
+        routers_map[i] = router;
         // For each router set it to listen in a new thread
-        int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
+        int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)router);
         if (rc) {
             perror("Unable to create thread\n");
             exit(-1);
@@ -131,8 +133,9 @@ int main(int argc, char* argv[])
         switch (input) {
             // List the routers
             case 'L':{
-                         for (int i = 0; i < router_count; i++) {
-                             ss << "Router " << i << " on " << routers[i]->port << endl;
+                         map<int, Router*>::iterator it;
+                         for (it = routers_map.begin(); it != routers_map.end(); it++) {
+                             ss << "Router " << it->first << " on " << it->second->port << endl;
                              Router::thread_print(ss.str());  
                          }
                          break;
@@ -175,6 +178,7 @@ int main(int argc, char* argv[])
                          ss.str("");
                          int to_delete;
                          cin >> to_delete;
+                         routers_map.erase(to_delete);
                          // TODO: delete the node from list
                          break;
                      }
@@ -183,9 +187,10 @@ int main(int argc, char* argv[])
                          ss << "Printing routing tables..." << endl;
                          Router::thread_print(ss.str());
                          ss.str("");
-                         for (int i = 0; i < router_count; i++) {
-                             ss << "Router " << i << " on " << routers[i]->port << endl;
-                             ss << routers[i]->print_routing_table() << endl;
+                         map<int, Router*>::iterator it;
+                         for (it = routers_map.begin(); it != routers_map.end(); it++) {
+                             ss << "Router " << it->first << " on " << it->second->port << endl;
+                             ss << it->second->print_routing_table() << endl;
                          }
                          Router::thread_print(ss.str());  
                          break;
