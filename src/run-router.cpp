@@ -120,6 +120,7 @@ int main(int argc, char* argv[])
         ss << "\'L\' to list routers" << endl;
         ss << "\'M\' to send a message" << endl;
         ss << "\'D\' to kill a router" << endl;
+        ss << "\'P\' to print all routing tables" << endl;
         ss << "====================" << endl; 
         Router::thread_print(ss.str());
         ss.str("");
@@ -175,6 +176,19 @@ int main(int argc, char* argv[])
                          int to_delete;
                          cin >> to_delete;
                          // TODO: delete the node from list
+                         break;
+                     }
+            case 'P':{
+                         ss << "---------" << endl;
+                         ss << "Printing routing tables..." << endl;
+                         Router::thread_print(ss.str());
+                         ss.str("");
+                         for (int i = 0; i < router_count; i++) {
+                             ss << "Router " << i << " on " << routers[i]->port << endl;
+                             ss << routers[i]->print_routing_table() << endl;
+                         }
+                         Router::thread_print(ss.str());  
+                         break;
                      }
             default:{
                         ss << "Invalid usage!" << endl;
