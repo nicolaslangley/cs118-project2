@@ -85,6 +85,18 @@ class AODVResponse: public AODVMessage
  * **************************/
 class AODVError: public AODVMessage
 {
-    bool no_delete_flag;
-    int dest_count; // Number of unreacheable destinations
+public:
+    unsigned long originator_ip;
+    AODVError();
+    AODVError(unsigned long orig_ip, unsigned long dest_ip);
 };
+
+
+
+
+
+
+
+
+
+
