@@ -136,7 +136,8 @@ int main(int argc, char* argv[])
                          map<int, Router*>::iterator it;
                          for (it = routers_map.begin(); it != routers_map.end(); it++) {
                              ss << "Router " << it->first << " on " << it->second->port << endl;
-                             Router::thread_print(ss.str());  
+                             Router::thread_print(ss.str());
+                             ss.str("");  
                          }
                          break;
                      }
@@ -200,6 +201,7 @@ int main(int argc, char* argv[])
                          Router::thread_print(ss.str());
                          ss.str("");  
                          string message_input;
+                         cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                          getline(cin, message_input);
                          ss << "Enter source router: " << endl;
                          Router::thread_print(ss.str());
@@ -215,6 +217,12 @@ int main(int argc, char* argv[])
                          ss << "Destination port: " << routers_map[receiver]->port << endl;
                          ss << "---------" << endl << endl;
                          Router::thread_print(ss.str());
+                         // Convert string message to char*
+                         char* data_message = new char[message_input.size() + 1];
+                         copy(message_input.begin(), message_input.end(), data_message);
+                         data_message[message_input.size()] = '\0';
+                         
+                         routers_map[sender]->send_data_text(htonl(0x7f000001), routers_map[receiver]->port, data_message);
                          break;
                      }
             default:{

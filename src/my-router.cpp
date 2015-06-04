@@ -185,34 +185,30 @@ void Router::receive_message()
                 //send_message(htonl(0x7f000001), res_message->originator_ip, ack->serialize());
                 handle_response(res_message);
             } else if (message_type == 4) {   //forward message to next port
-				vector <string> values;    //values[0] = message_type 
-				int commaCnt = 0;  	//values[1] = final port    values[2] = data message
-				int c = 0;
-				while (message[c] != '\0') {
-					if (message[c] != ',' || commaCnt >= 2)
-						values[commaCnt] += message[c];
-					else if (commaCnt <= 2)
-						commaCnt++; 
-					c++; 
-				}
+                string values[3];    //values[0] = message_type 
+                int commaCnt = 0;  	//values[1] = final port    values[2] = data message
+                int c = 0;
+                while (message[c] != '\0') {
+                    if (message[c] != ',' || commaCnt >= 2) {
+                        values[commaCnt] += message[c];
+                    } else if (commaCnt <= 2)
+                        commaCnt++; 
+                    c++; 
+                }
                 char const* finalPortC = values[1].c_str();
-				unsigned long finalPortNum = (unsigned long)atoi(finalPortC);   //final node 
+                unsigned long finalPortNum = (unsigned long)atoi(finalPortC);   //final node 
                 //message to send: type, final port, data message
-				string finalPortandData = "4,";
-                finalPortandData += values[2];
-                finalPortandData += ",";
-				finalPortandData += values[3];    //send final port and data together
+                string finalPort = values[1];
+                string data = values[2];
 
-				char* packet = new char[finalPortandData.size() + 1];
-				copy(finalPortandData.begin(), finalPortandData.end(), packet);
-				packet[finalPortandData.size()] = '\0';
-                
-        
-                tableEntryRouting tmp = routing_table[finalPortNum];
-                
-				//send_data (address, next node, final node, data) 
-				send_data_text(htonl(0x7f000001), tmp.next_ip, message); 
-							//ip             next router    final port value, and data
+                char* packet = new char[data.size() + 1];
+                copy(data.begin(), data.end(), packet);
+                packet[data.size()] = '\0';
+
+
+                //send_data (address, next node, final node, data) 
+                send_data_text(htonl(0x7f000001), finalPortNum, packet); 
+                //ip             next router    final port value, and data
                 // TODO: determine if message was an RERR or data
             } else if (message_type == 3) {
                 // Handle error message
@@ -242,19 +238,22 @@ void Router::send_aodv(unsigned long addr, int port, AODVMessage* message)
 /****************************
  * Simple wrapper around send_message() that loads a text message 
  * **************************/
-void Router::send_data_text(unsigned long addr, int port, char* text)
+void Router::send_data_text(unsigned long addr, int dest_port, char* text)
 {
-    // Append data type (4) and port value to message
+    // Append data type (4) and dest_port value to message
 
     stringstream ss;
-    ss << "4" << "," << port << "," << text;
+    ss << "4" << "," << dest_port << "," << text;
 
     string str = ss.str();
     char* message = new char[str.size() + 1];
     copy(str.begin(), str.end(), message);
     message[str.size()] = '\0';
+
+
+    tableEntryRouting tmp = routing_table[dest_port];
     // Send data over UDP
-    send_message(addr, port, message);
+    send_message(addr, tmp.next_ip, message);
 }
 
 
@@ -663,7 +662,7 @@ void Router::handle_error(AODVError* err)
         newErr.destination_ip = err->destination_ip;
         newErr.originator_ip = err->originator_ip;
         err_table[incomingErrKey] = newErr;
-        
+
         tableEntryRouting routing_entry = routing_table[err->destination_ip];
         send_aodv(htonl(0x7f000001), routing_entry.next_ip, err);
 
@@ -678,19 +677,19 @@ void Router::handle_ack(AODVAck* ack)
     transmission_table.erase(ack->originator_ip);
 }
 
-        //send err messages to neighbors
-        // for (it = routing_table.begin(); it != routing_table.end(); it++) {
-        //     if (it->second.is_neighbor) 
-        //     {
-        //     ss << "Sending error message to neighbour on port " << it->first << endl;
-        //     AODVError* err_message = new AODVError(err->originator_ip,
-        //                                                err->destination_ip);
+//send err messages to neighbors
+// for (it = routing_table.begin(); it != routing_table.end(); it++) {
+//     if (it->second.is_neighbor) 
+//     {
+//     ss << "Sending error message to neighbour on port " << it->first << endl;
+//     AODVError* err_message = new AODVError(err->originator_ip,
+//                                                err->destination_ip);
 
-        //     ss << "DEBUG: " << err_message->serialize() << endl;   //serialize works for err?
-        //     send_aodv(htonl(0x7f000001), it->first, req_message);  //send_aodv works for err?
-        //     }
+//     ss << "DEBUG: " << err_message->serialize() << endl;   //serialize works for err?
+//     send_aodv(htonl(0x7f000001), it->first, req_message);  //send_aodv works for err?
+//     }
 
-        // }
+// }
 
 // void acknowledge_message(){}
 
