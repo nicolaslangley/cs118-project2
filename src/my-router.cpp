@@ -69,7 +69,7 @@ Router::Router(int port, int buf_size, vector<Tuple>& data) : buffer_size(buf_si
             entry.sequence = 1; 
             entry.destination_ip = data[i].dest_port; 
             entry.next_ip = data[i].dest_port;
-            entry.hop_count = 1;
+            entry.hop_count = data[i].linkCost;
             entry.is_neighbor = true;
             routing_table[data[i].dest_port] = entry;
             //routing_table.insert(pair<unsigned long, tableEntryRouting>(data[i].src_port, entry));
@@ -471,7 +471,8 @@ void Router::handle_request(AODVRequest* req)
             //      and issue RREQ with switched originator and destination. 
             //      Generate request flip origin and destination
             ss << "Generate request turnaround" << endl;
-            AODVRequest* req_message = new AODVRequest(req->destination_ip,req->originator_ip,1,port,req->sender_ip,true);       
+            tableEntryRouting next_table_entry = routing_table[req->sender_ip];
+            AODVRequest* req_message = new AODVRequest(req->destination_ip,req->originator_ip,next_table_entry.hop_count,port,req->sender_ip,true);       
             ss << req_message->serialize() << endl;
             send_aodv(htonl(0x7f000001), req->sender_ip, req_message);
         }
@@ -479,7 +480,8 @@ void Router::handle_request(AODVRequest* req)
         {
             ss << "RREP forwarding back to origin" << endl;
             tableEntryRouting destination_table_entry = routing_table[req->destination_ip];
-            AODVRequest* req_message = new AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,port,destination_table_entry.next_ip,true);
+            tableEntryRouting next_table_entry = routing_table[destination_table_entry.next_ip];
+            AODVRequest* req_message = new AODVRequest(req->originator_ip,req->destination_ip,(req->hop_count + next_table_entry.hop_count),port,destination_table_entry.next_ip,true);
             ss << req_message->serialize() << endl;
             send_aodv(htonl(0x7f000001), destination_table_entry.next_ip, req_message);
         }
@@ -489,8 +491,11 @@ void Router::handle_request(AODVRequest* req)
 
             //      add to tables and retransmit only to the destination->next
             //      follow routing_table to next
+
+
             tableEntryRouting destination_table_entry = routing_table[req->destination_ip];
-            AODVRequest* req_message = new AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,port,destination_table_entry.next_ip,false);
+            tableEntryRouting next_table_entry = routing_table[destination_table_entry.next_ip];
+            AODVRequest* req_message = new AODVRequest(req->originator_ip,req->destination_ip,(req->hop_count + next_table_entry.hop_count),port,destination_table_entry.next_ip,false);
             ss << req_message->serialize() << endl;
             send_aodv(htonl(0x7f000001), destination_table_entry.next_ip, req_message);
         }
@@ -511,7 +516,7 @@ void Router::handle_request(AODVRequest* req)
                     // We have found a neighbour
                     AODVRequest* req_message = new AODVRequest(req->originator_ip,
                             req->destination_ip,
-                            req->hop_count+1,
+                            (req->hop_count + it->second.hop_count),
                             port,
                             it->first,
                             false);

@@ -22,11 +22,13 @@ This standard provides an alternative to the Bellman-Ford algorithm commonly use
 AODV reduces overhead and network utilization by avoiding the initial network distance vector convergence process.
 Instead routers only generate routing table entries ad hoc when a route is needed.  The originating node will issue an AODVRequest which will be propagated node by node through the network. During this process backword routes are established and so as the rreq propagates outward a path from the destination to the origin is established, and when it propagates inward a route from the origin to the destination is established.  Messages are sent from one router to another, by referencing the routing tables.  If the routing table has an entry for that destination it will direct the message to the next node along the path.
 
-The first step in activating our network is creating the routers.Once the routers are created we parse the router load file and add corresponding entries to the routing table for each router.
+The first step in activating our network is creating the routers. Once the routers are created we parse the router load file and add corresponding entries to the routing table for each router.
 
 
 When a route request (RREQ) is generated it includes the origin ip and destination ip.  These are packaged up in an AODVRequest and sent to the the neighboring nodes, who then check their cache tables to see if they have already addressed this request.  If they haven't, then they add a routing table entry toward the origin node and begin a series of tests to see if they have for example a route to the destination in the request that was established during a previous RREQ.  If the router does have an entry for that destination, it forwards the RREQ to the next ip data member from the routing table entry.  If it doesn't have a usable entry in its routing table, then it propagates the RREQ to all of its neighbors.  This process continues until the RREQ reaches its destination node.  At this point a flag is set to indicate that the RREQ is on its return path.  Since we created a path back to the origin on the way to the destination we can simply follow the routing table entries back to the origin.  Along the way we create entries that give us at each router the next ip toward the destination.  Once we have reached the origin we have a complete path.
 
+After finding a complete path, we may attempt to send a message along the path. In order to do so, we implemented a forwarding system
+where each router sends the message to the next router in the path, up until the destination router has been reached. 
 
 
 \section{Difficulties Encountered and Solutions}
