@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
                      }
             case 'K':{
                          ss << "---------" << endl;
-                         ss << "Enter router to delete: " << endl;
+                         ss << "Enter router to kill:" << endl;
                          Router::thread_print(ss.str());
                          ss.str("");
                          int to_delete;

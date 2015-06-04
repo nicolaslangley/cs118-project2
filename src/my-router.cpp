@@ -322,8 +322,8 @@ void Router::find_path(unsigned long dest, int dest_port)
 void Router::remove_expired_entries(){
 
     map<unsigned long,tableEntryRouting>::iterator it_1;
-    for(it_1 = routing_table.begin(); it_1 != routing_table.end();)    
-    {
+    for(it_1 = routing_table.begin(); it_1 != routing_table.end();) {
+        if (it_1->second.is_neighbor) continue;
         clock_t time_entered = it_1->second.time_stamp;
         clock_t time_current = clock(); 
         double elapsed_secs = double(time_current - time_entered) / CLOCKS_PER_SEC;
@@ -338,8 +338,7 @@ void Router::remove_expired_entries(){
     }
 
     map<pair<unsigned long,unsigned long>,tableEntryCache>::iterator it_2;
-    for(it_2 = cache_table.begin(); it_2 != cache_table.end();)    
-    {
+    for(it_2 = cache_table.begin(); it_2 != cache_table.end();) {
         clock_t time_entered = it_2->second.time_stamp;
         clock_t time_current = clock(); 
         double elapsed_secs = double(time_current - time_entered) / CLOCKS_PER_SEC;
