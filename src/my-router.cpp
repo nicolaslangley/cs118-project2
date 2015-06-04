@@ -532,106 +532,131 @@ void Router::handle_request(AODVRequest* req)
         //cout << "Printing cache table end at " << port << endl;
         //ss << print_cache_table();
     }
-    // else
-    // {
-    //     // if we found a better path, replace cache and routing entries
-    //     if(req->hop_count < routing_table[originator_ip].hop_count)
-    //     {
-    //         tableEntryRouting previousNodeCumulative;
+    else
+    {
+        if(req->hop_count < routing_table[req->originator_ip].hop_count)
+        {
+        ss << "REQ in cache table being replaced by lower hop count" << port << endl;        
+        tableEntryCache reqCacheEntry;
 
-    //         previousNodeCumulative.destination_ip = req->originator_ip;
-    //         previousNodeCumulative.next_ip = req->sender_ip;
-    //         previousNodeCumulative.sequence = req->destination_sequence_num;
-    //         previousNodeCumulative.hop_count = req->hop_count;        
-    //         previousNodeCumulative.is_neighbor = false;
+        reqCacheEntry.destination_ip = req->destination_ip;
+        reqCacheEntry.source_ip = req->originator_ip;
+        reqCacheEntry.sequence = req->originator_sequence_number;  //sequence number of source
+        reqCacheEntry.hop_count = req->hop_count;
+        reqCacheEntry.time_stamp = clock();
 
-    //         routing_table[req->originator_ip]=previousNodeCumulative;  
+        cache_table[incomingRequestKey]=reqCacheEntry;
 
-    //         tableEntryCache reqCacheEntry;
+        tableEntryRouting previousNodeCumulative;
 
-    //         reqCacheEntry.destination_ip = req->destination_ip;
-    //         reqCacheEntry.source_ip = req->originator_ip;
-    //         reqCacheEntry.sequence = req->originator_sequence_number;  //sequence number of source
-    //         reqCacheEntry.hop_count = req->hop_count;
+        previousNodeCumulative.destination_ip = req->originator_ip;
+        previousNodeCumulative.next_ip = req->sender_ip;
+        previousNodeCumulative.sequence = req->destination_sequence_num;
+        previousNodeCumulative.hop_count = req->hop_count;        
+        previousNodeCumulative.is_neighbor = false;
+        previousNodeCumulative.time_stamp = clock();
 
-    //         cache_table[incomingRequestKey]=reqCacheEntry;    
+        routing_table[req->originator_ip]=previousNodeCumulative;
+        
+
+        bool is_rrep;
+        bool is_dest;
+        bool is_in_table;
+
+        if(req->destination_reached == true)
+            is_rrep = true;
+        else
+            is_rrep = false;
+
+        if(port == req->destination_ip)
+            is_dest = true;
+        else
+            is_dest = false;
+
+        if(destination_in_routing_table == true)
+            is_in_table = true;
+        else
+            is_in_table = false;
+
+        if (is_dest && is_rrep)
+        {
+            ss << print_routing_table();
+            Router::thread_print(ss.str());
+            ss.str("");
+            send_data_text(htonl(0x7f000001), req->originator_ip, queued_message);
+            Router::display_menu = true;
+            //      Route complete.
+        }
+        else if (is_dest && !is_rrep)
+        {
+            //      else set turnaround_flag = true
+            //      and issue RREQ with switched originator and destination. 
+            //      Generate request flip origin and destination
+            ss << "Generate request turnaround" << endl;
+            tableEntryRouting next_table_entry = routing_table[req->sender_ip];
+            AODVRequest* req_message = new AODVRequest(req->destination_ip,req->originator_ip,next_table_entry.hop_count,port,req->sender_ip,true);       
+            ss << req_message->serialize() << endl;
+            send_aodv(htonl(0x7f000001), req->sender_ip, req_message);
+        }
+        else if (!is_dest && is_rrep) //don return all destinations will be in routing tables
+        {
+            ss << "RREP forwarding back to origin" << endl;
+            tableEntryRouting destination_table_entry = routing_table[req->destination_ip];
+            tableEntryRouting next_table_entry = routing_table[destination_table_entry.next_ip];
+            AODVRequest* req_message = new AODVRequest(req->originator_ip,req->destination_ip,(req->hop_count + next_table_entry.hop_count),port,destination_table_entry.next_ip,true);
+            ss << req_message->serialize() << endl;
+            send_aodv(htonl(0x7f000001), destination_table_entry.next_ip, req_message);
+        }
+        else if (!is_dest && is_in_table && !is_rrep)
+        {
+            ss << "Forwarding using routing table" << endl;
+
+            //      add to tables and retransmit only to the destination->next
+            //      follow routing_table to next
 
 
-    //     bool is_rrep;
-    //     bool is_dest;
-    //     bool is_in_table;
+            tableEntryRouting destination_table_entry = routing_table[req->destination_ip];
+            tableEntryRouting next_table_entry = routing_table[destination_table_entry.next_ip];
+            AODVRequest* req_message = new AODVRequest(req->originator_ip,req->destination_ip,(req->hop_count + next_table_entry.hop_count),port,destination_table_entry.next_ip,false);
+            ss << req_message->serialize() << endl;
+            send_aodv(htonl(0x7f000001), destination_table_entry.next_ip, req_message);
+        }
+        else if (!is_dest && !is_in_table)
+        {        
+            //      standard replication
+            //      add to tables and retransmit to all neighbors
+            //      for(each neighbor in neighborlist){send AODVRequest()}
 
-    //     if(req->destination_reached == true)
-    //         is_rrep = true;
-    //     else
-    //         is_rrep = false;
+            //      Generate request for each neighbor
+            map<unsigned long, tableEntryRouting>::iterator it;
+            ss << "Propogating REQ" << endl;
+            ss << "Number of neighbours: " << routing_table.size() << endl;
 
-    //     if(addr == req->destination_ip)
-    //         is_dest = true;
-    //     else
-    //         is_dest = false;
+            for (it = routing_table.begin(); it != routing_table.end(); it++) {
+                if (it->second.is_neighbor) {
+                    ss << "Sending to neighbour on port " << it->first << endl;
+                    // We have found a neighbour
+                    AODVRequest* req_message = new AODVRequest(req->originator_ip,
+                            req->destination_ip,
+                            (req->hop_count + it->second.hop_count),
+                            port,
+                            it->first,
+                            false);
+                    ss << "DEBUG: " << req_message->serialize() << endl;
+                    ss << "---------" << endl << endl;
+                    // TODO: fix the port and portess stuff
+                    // NOTE: it->first is the port value
+                    send_aodv(htonl(0x7f000001), it->first, req_message);
+                }
+            }
+        }        
 
-    //     if(destination_in_routing_table == true)
-    //         is_in_table = true;
-    //     else
-    //         is_in_table = false;
+    }  //if
 
-    //     if (is_dest && is_rrep)
-    //     {
-    //         print_routing_table();
-    //         //      Route complete.
-    //     }
-    //     else if (is_dest && !is_rrep)
-    //     {
-    //         //      else set turnaround_flag = true
-    //         //      and issue RREQ with switched originator and destination. 
-    //         //      Generate request flip origin and destination
-    //         AODVRequest(req->destination_ip,req->originator_ip,0,addr,req->sender_ip,true);       
-    //     }
-    //     else if (!is_dest && is_rrep) //don return all destinations will be in routing tables
-    //     {
-    //         tableEntryRouting destination_entry = routing_table[req->destination_ip];
-    //         AODVRequest(req->destination_ip,req->originator_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
-    //     }
-    //     else if (!is_dest && is_in_table && !is_rrep)
-    //     {
-    //         //      add to tables and retransmit only to the destination->next
-    //         //      follow routing_table to next
-    //         tableEntryRouting destination_entry = routing_table[req->destination_ip];
-    //         AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
-    //     }
-    //     else if (!is_dest && !is_in_table)
-    //     {        
-    //         //      standard replication
-    //         //      add to tables and retransmit to all neighbors
-    //         //      for(each neighbor in neighborlist){send AODVRequest()}
-
-    //         //      Generate request for each neighbor
-    //         map<unsigned long, tableEntryRouting>::iterator it;
-    //         ss << "Number of neighbours: " << routing_table.size() << endl;
-
-    //         for (it = routing_table.begin(); it != routing_table.end(); it++) {
-    //             if (it->second.is_neighbor) {
-    //                 ss << "Sending to neighbour on port " << it->first << endl;
-    //                 // We have found a neighbour
-    //                 AODVRequest* req_message = new AODVRequest(req->originator_ip,
-    //                                                            req->destination_ip,
-    //                                                            1,
-    //                                                            port,
-    //                                                            it->first,
-    //                                                            false);
-    //                 ss << "DEBUG: " << req_message->serialize() << endl;
-    //                 // TODO: fix the port and address stuff
-    //                 // NOTE: it->first is the port value
-    //                 send_aodv(htonl(0x7f000001), it->first, req_message);
-    //             }
-    //         }
-    //     }        
-
-    // }
-    // } //end else
+    }  //else
 
     Router::thread_print(ss.str());
+
 }
 
 string Router::print_routing_table()
