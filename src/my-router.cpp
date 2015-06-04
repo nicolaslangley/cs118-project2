@@ -173,7 +173,31 @@ void Router::receive_message()
                 AODVRequest* res_message = new AODVRequest();
                 res_message->deserialize(message);
                 handle_response(res_message);
-            } else {
+            } 
+			else if (message_type == 4) {   //forward message to next port
+				vector <string> values;    //values[0] = message_type 
+				int commaCnt = 0;  	//values[1] = dest_port    values[2] = actual data    
+				int c = 0;
+				while (message[c] != '\0') {
+					if (message[c] != ',' || commaCnt >= 3) 
+						values[commaCnt] += message[c];
+					else if (commaCnt < 3)
+						commaCnt++; 
+					c++; 
+				}
+				char const* finalPortC = values[2].c_str();   
+				unsigned long finalPortNum = (unsigned long)atoi(portC);   //final node 
+				tableEntryRouting tmp = routing_table[finalPortNum];    //look up node
+				string finalPortandData = values[2];      
+				finalPortandData += values[3];    //send final port and data together
+
+				char* message = new char[finalPortandData.size() + 1];
+				copy(str.begin(), str.end(), message);
+				message[finalPortandData.size()] = '\0'; 
+				
+				//send_data (address, next node, final node, data) 
+				send_data_text(htonl(0x7f000001), tmp.next_ip, message); 
+							//ip             next router    final port value, and data
                 // TODO: determine if message was an RERR or data
             }
         }
