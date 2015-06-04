@@ -36,6 +36,7 @@ class Router {
         // TODO(Frank): add variables for local link state
         //              set these in functions to be implemented below
        
+       const int max_attempts = 4;
 
         int node_id; // ID for router
         int sock_fd; // Socket file descriptor
@@ -60,9 +61,21 @@ class Router {
             int hop_count;
         };
 
+        struct tableEntryErr{
+            unsigned long originator_ip;
+            unsigned long destination_ip;
+        };
+
+        struct tableEntryTransmission{
+            unsigned long destination_ip;
+            time_t send_time;
+        };
+
         // TODO: where is tableCacheEntry defined?
         map< pair<unsigned long, unsigned long>, tableEntryCache> cache_table;  //key is source_ip,destination_ip
         map<unsigned long, tableEntryRouting> routing_table;
+        map< pair<unsigned long, unsigned long>, tableEntryErr> err_table;
+        map<unsigned long, tableEntryTransmission> transmission_table;
 
         // Constructor: sets link costs according to topology
          Router(int port, int buf_size, vector<Tuple>& data);
@@ -84,7 +97,10 @@ class Router {
         // TODO(Michael): implement functions for handling incoming RREQ or RREP messages 
         void handle_request(AODVRequest* req);
         void handle_response(AODVRequest* res);
-        void handle_error(AODVRequest* err);
+        void handle_error(AODVError* err);
+
+        void message_not_acknowledged();
+        void acknowledge_message();
         void handle_ack(AODVAck* ack);
         string print_routing_table();
         string print_cache_table();

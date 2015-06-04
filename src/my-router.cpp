@@ -443,15 +443,105 @@ void Router::handle_request(AODVRequest* req)
         //cout << "Printing cache table end at " << port << endl;
         //ss << print_cache_table();
     }
-    else
-    {
+    // else
+    // {
+    //     // if we found a better path, replace cache and routing entries
+    //     if(req->hop_count < routing_table[originator_ip].hop_count)
+    //     {
+    //         tableEntryRouting previousNodeCumulative;
 
-        //if(req->hop_count < routing_table[originator_ip].hop_count)
-        //{
-        //    
-        //}
-        // compare rreq to cacheTableEntry and choose if hop_count lesser then 
-    }
+    //         previousNodeCumulative.destination_ip = req->originator_ip;
+    //         previousNodeCumulative.next_ip = req->sender_ip;
+    //         previousNodeCumulative.sequence = req->destination_sequence_num;
+    //         previousNodeCumulative.hop_count = req->hop_count;        
+    //         previousNodeCumulative.is_neighbor = false;
+
+    //         routing_table[req->originator_ip]=previousNodeCumulative;  
+
+    //         tableEntryCache reqCacheEntry;
+
+    //         reqCacheEntry.destination_ip = req->destination_ip;
+    //         reqCacheEntry.source_ip = req->originator_ip;
+    //         reqCacheEntry.sequence = req->originator_sequence_number;  //sequence number of source
+    //         reqCacheEntry.hop_count = req->hop_count;
+
+    //         cache_table[incomingRequestKey]=reqCacheEntry;    
+
+
+    //     bool is_rrep;
+    //     bool is_dest;
+    //     bool is_in_table;
+
+    //     if(req->destination_reached == true)
+    //         is_rrep = true;
+    //     else
+    //         is_rrep = false;
+
+    //     if(addr == req->destination_ip)
+    //         is_dest = true;
+    //     else
+    //         is_dest = false;
+
+    //     if(destination_in_routing_table == true)
+    //         is_in_table = true;
+    //     else
+    //         is_in_table = false;
+
+    //     if (is_dest && is_rrep)
+    //     {
+    //         print_routing_table();
+    //         //      Route complete.
+    //     }
+    //     else if (is_dest && !is_rrep)
+    //     {
+    //         //      else set turnaround_flag = true
+    //         //      and issue RREQ with switched originator and destination. 
+    //         //      Generate request flip origin and destination
+    //         AODVRequest(req->destination_ip,req->originator_ip,0,addr,req->sender_ip,true);       
+    //     }
+    //     else if (!is_dest && is_rrep) //don return all destinations will be in routing tables
+    //     {
+    //         tableEntryRouting destination_entry = routing_table[req->destination_ip];
+    //         AODVRequest(req->destination_ip,req->originator_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
+    //     }
+    //     else if (!is_dest && is_in_table && !is_rrep)
+    //     {
+    //         //      add to tables and retransmit only to the destination->next
+    //         //      follow routing_table to next
+    //         tableEntryRouting destination_entry = routing_table[req->destination_ip];
+    //         AODVRequest(req->originator_ip,req->destination_ip,req->hop_count+1,addr,destination_entry.next_ip,false);
+    //     }
+    //     else if (!is_dest && !is_in_table)
+    //     {        
+    //         //      standard replication
+    //         //      add to tables and retransmit to all neighbors
+    //         //      for(each neighbor in neighborlist){send AODVRequest()}
+
+    //         //      Generate request for each neighbor
+    //         map<unsigned long, tableEntryRouting>::iterator it;
+    //         ss << "Number of neighbours: " << routing_table.size() << endl;
+
+    //         for (it = routing_table.begin(); it != routing_table.end(); it++) {
+    //             if (it->second.is_neighbor) {
+    //                 ss << "Sending to neighbour on port " << it->first << endl;
+    //                 // We have found a neighbour
+    //                 AODVRequest* req_message = new AODVRequest(req->originator_ip,
+    //                                                            req->destination_ip,
+    //                                                            1,
+    //                                                            port,
+    //                                                            it->first,
+    //                                                            false);
+    //                 ss << "DEBUG: " << req_message->serialize() << endl;
+    //                 // TODO: fix the port and address stuff
+    //                 // NOTE: it->first is the port value
+    //                 send_aodv(htonl(0x7f000001), it->first, req_message);
+    //             }
+    //         }
+    //     }        
+
+    // }
+    // } //end else
+
     Router::thread_print(ss.str());
 }
 
@@ -487,6 +577,65 @@ string Router::print_cache_table()
     return ss.str();
 
 }
+
+//if not already in cache
+//forward message to all neighbors
+//erase from tables
+
+void Router::handle_error(AODVError* err)
+{
+    pair<unsigned long,unsigned long> incomingErrKey = make_pair(err->originator_ip,err->destination_ip);
+
+    if (err_table.find(incomingErrKey) == err_table.end())
+    {
+        //add to err table
+        tableEntryErr newErr;
+        newErr.destination_ip = err->destination_ip;
+        newErr.originator_ip = err->originator_ip;
+        err_table[incomingErrKey] = newErr;
+        
+        tableEntryRouting routing_entry = routing_table[err->destination_ip];
+        send_aodv(htonl(0x7f000001), routing_entry.next_ip, err);
+
+        cache_table.erase(incomingErrKey);
+        routing_table.erase(err->destination_ip);
+    }
+
+}
+
+        //send err messages to neighbors
+        // for (it = routing_table.begin(); it != routing_table.end(); it++) {
+        //     if (it->second.is_neighbor) 
+        //     {
+        //     ss << "Sending error message to neighbour on port " << it->first << endl;
+        //     AODVError* err_message = new AODVError(err->originator_ip,
+        //                                                err->destination_ip);
+
+        //     ss << "DEBUG: " << err_message->serialize() << endl;   //serialize works for err?
+        //     send_aodv(htonl(0x7f000001), it->first, req_message);  //send_aodv works for err?
+        //     }
+
+        // }
+
+// void acknowledge_message(){}
+
+// void message_not_acknowledged(){
+//     //if acknowledgement not received, send again until attempts equals max_attempts
+//     //if attempts equals max_attempts, then the node is down
+//     //  must either remove rreq from cache tables, or begin route exploration from last non-broken node in chain, must track nodes 
+// }
+
+// void router_down_erase_entries(){
+//     //we have a route that is somewhere broken
+//     //we propagate a message along that route by referencing routing table
+//     //then we remove the cache_table entry for the pair<originator_ip,destination_ip>
+//     //then we remove the routing_table entry for the destination_ip
+
+//     //
+
+
+// }
+
 
 
 
