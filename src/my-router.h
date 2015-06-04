@@ -31,13 +31,14 @@ struct RouterData {
 class Router {
     public:
         // Mutex for thread printing 
+        static bool display_menu;
         static mutex mtx;
         static void thread_print(string input);
         // Router properties
         // TODO(Frank): add variables for local link state
         //              set these in functions to be implemented below
        
-       const int max_attempts = 4;
+        const int max_attempts = 4;
 
         int node_id; // ID for router
         int sock_fd; // Socket file descriptor
@@ -45,6 +46,8 @@ class Router {
         int port; 
         unsigned long addr; // IP address
         int routerSequenceNumber;
+    
+        char* queued_message;
 
         struct tableEntryRouting{
             int sequence;
