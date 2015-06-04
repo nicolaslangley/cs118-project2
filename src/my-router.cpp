@@ -191,6 +191,25 @@ void Router::send_aodv(unsigned long addr, int port, AODVMessage* message)
 }
 
 /****************************
+ * Simple wrapper around send_message() that loads a text message 
+ * **************************/
+void Router::send_data_text(unsigned long addr, int port, char* text)
+{
+    // Append data type (4) and port value to message
+
+    stringstream ss;
+    ss << "4" << "," << port << "," << text;
+    
+    string str = ss.str();
+    char* message = new char[str.size() + 1];
+    copy(str.begin(), str.end(), message);
+    message[str.size()] = '\0';
+    // Send data over UDP
+    send_message(addr, port, message);
+}
+
+
+/****************************
  * Simple wrapper around send_message() that loads a binary file 
  * **************************/
 void Router::send_data(unsigned long addr, int port, char* filename)

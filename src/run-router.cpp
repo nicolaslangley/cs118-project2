@@ -11,18 +11,8 @@
 
 using namespace std;
 
-void run_sender(Router* sender, unsigned int dest_addr, int dest_port)
-{
-    printf("Sending message to server at address %u on port %d\n", htonl(dest_addr), dest_port);
-    AODVRequest* req_message = new AODVRequest(htonl(sender->addr), htonl(dest_addr),1,htonl(sender->addr),htonl(sender->addr), false);
-    // AODVRequest(unsigned long orig_ip, unsigned long dest_ip, int hop_ct, unsigned long send_ip, unsigned long rec_ip, bool dest_rchd);
 
-    AODVResponse* res_message = new AODVResponse(htonl(sender->addr), htonl(dest_addr));
-    char* serialized_message = res_message->serialize();
-    sender->send_message(dest_addr, dest_port, serialized_message);
-}
-
-
+// Load node topology file
 RouterData load_topology(string filename)
 {
     //Node Topology: 
@@ -108,10 +98,10 @@ int main(int argc, char* argv[])
     string topology_fname(argv[1]);
     RouterData data = load_topology(topology_fname);
     int router_count = data.portList.size();
+    // TODO: make this a vector?
     Router* routers[router_count];
     pthread_t threads[router_count];
     for (int i = 0; i < router_count; i++) {
-        // TODO: create routers 
         routers[i] = new Router(data.portList[i], 2048, data.nodeInfo);
         // For each router set it to listen in a new thread
         int rc = pthread_create(&threads[i], NULL, run_receiver, (void*)routers[i]);
@@ -126,7 +116,10 @@ int main(int argc, char* argv[])
         ss.str("");
         ss << "====================" << endl << "       MENU" << endl << "====================" << endl;
         ss << "Enter command:" << endl;
-        ss << "Usage:" << endl << "\'L\' to list routers" << endl << "\'M\' to send a message" << endl;
+        ss << "Usage:" << endl;
+        ss << "\'L\' to list routers" << endl;
+        ss << "\'M\' to send a message" << endl;
+        ss << "\'D\' to kill a router" << endl;
         ss << "====================" << endl; 
         Router::thread_print(ss.str());
         ss.str("");
@@ -160,8 +153,8 @@ int main(int argc, char* argv[])
                          ss << "Destination port: " << routers[receiver]->port << endl;
                          ss << "---------" << endl << endl;
                          Router::thread_print(ss.str());
-                         // Stop the sender from listening
-                         pthread_cancel(threads[sender]); // TODO: should I be calling this?
+                         // Stop the sender from listening by killing thread
+                         pthread_cancel(threads[sender]); 
                          int destination_port = routers[receiver]->port;
                          unsigned long destination_addr = routers[receiver]->addr;
                          // TODO: block until path found 
@@ -173,6 +166,15 @@ int main(int argc, char* argv[])
                              exit(-1);
                          }
                          break;
+                     }
+            case 'D':{
+                         ss << "---------" << endl;
+                         ss << "Enter router to delete: " << endl;
+                         Router::thread_print(ss.str());
+                         ss.str("");
+                         int to_delete;
+                         cin >> to_delete;
+                         // TODO: delete the node from list
                      }
             default:{
                         ss << "Invalid usage!" << endl;
