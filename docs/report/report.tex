@@ -16,19 +16,21 @@ Project 2: AODV}
 \section{AODV Implementation Overview}
 
 The distance vector routing algorithm that we implemented was based off of AODV
-
 AODV stands for Ad Hoc On Demand Distance Vector.
 This standard provides an alternative to the Bellman-Ford algorithm commonly used to find paths in a network.
 AODV reduces overhead and network utilization by avoiding the initial network distance vector convergence process.
 Instead routers only generate routing table entries ad hoc when a route is needed.  The originating node will issue an AODVRequest which will be propagated node by node through the network. During this process backword routes are established and so as the rreq propagates outward a path from the destination to the origin is established, and when it propagates inward a route from the origin to the destination is established.  Messages are sent from one router to another, by referencing the routing tables.  If the routing table has an entry for that destination it will direct the message to the next node along the path.
 
+\section{Initial Setup}
 The first step in activating our network is creating the routers. Once the routers are created we parse the router load file and add corresponding entries to the routing table for each router. As a side note, in every AODV 
-specification that we researched, a hop-count was utilized, and incremented for each node passed along the path. However, because each edge in the graph also possesses an associated link cost, we treated the link cost as a series of edges between nodes that are in b. For instance, if there is an edge from node A to B with a link cost of 3, we model it as a sort of series containing virtual nodes, such as A -> A1 -> A2 -> B, with each edge possessing hop count of 1. In the actual code, we simply place an associated hop count of 3 when we model a route from A to B. 
+specification that we researched, a hop-count was utilized, and incremented for each node passed along the path. However, because each edge in the graph also possesses an associated link cost, we treated the link cost as a series of edges between nodes that are in b. For instance, if there is an edge from node A to B with a link cost of 3, we model it as a sort of series containing virtual nodes, such as A to A1 to A2 to B, with each edge possessing a hop count of 1. In the actual code, we simply place an associated hop count of 3 when we model a route from A to B. 
 
+\section{Finding a Complete Path}
 When a route request (RREQ) is generated it includes the origin ip and destination ip.  These are packaged up in an AODVRequest and sent to the the neighboring nodes, who then check their cache tables to see if they have already addressed this request.  If they haven't, then they add a routing table entry toward the origin node and begin a series of tests to see if they have for example a route to the destination in the request that was established during a previous RREQ.  If the router does have an entry for that destination, it forwards the RREQ to the next ip data member from the routing table entry.  If it doesn't have a usable entry in its routing table, then it propagates the RREQ to all of its neighbors.  This process continues until the RREQ reaches its destination node.  At this point a flag is set to indicate that the RREQ is on its return path.  Since we created a path back to the origin on the way to the destination we can simply follow the routing table entries back to the origin.  Along the way we create entries that give us at each router the next ip toward the destination.  Once we have reached the origin we have a complete path.
-
 After finding a complete path, we may attempt to send a message along the path. In order to do so, we implemented a forwarding system
 where each router sends the message to the next router in the path, up until the destination router has been reached. 
+
+\section{Path Optimization}
 
 
 \section{Difficulties Encountered and Solutions}
