@@ -144,6 +144,7 @@ int main(int argc, char* argv[])
                      }
             // Send a message from source to destination router
             case 'M':{
+                         ss << "---------" << endl;
                          ss << "Enter source router: " << endl;
                          Router::thread_print(ss.str());
                          ss.str("");
@@ -156,12 +157,20 @@ int main(int argc, char* argv[])
                          int receiver;
                          cin >> receiver;
                          ss << "Destination port: " << routers[receiver]->port << endl;
+                         ss << "---------" << endl << endl;
+                         Router::thread_print(ss.str());
                          // Stop the sender from listening
                          pthread_cancel(threads[sender]); // TODO: should I be calling this?
                          int destination_port = routers[receiver]->port;
                          unsigned long destination_addr = routers[receiver]->addr;
                          // TODO: block until path found 
                          routers[sender]->find_path(destination_addr, destination_port);
+
+                         int rc = pthread_create(&threads[sender], NULL, run_receiver, (void*)routers[sender]);
+                         if (rc) {
+                             perror("Unable to create thread\n");
+                             exit(-1);
+                         }
                          break;
                      }
             default:{
@@ -169,6 +178,5 @@ int main(int argc, char* argv[])
                         ss << "Usage:\n \'L\' to list routers\n \'M\' to send a message" << endl;
                     }
         }
-        Router::thread_print(ss.str());
     }
 }
