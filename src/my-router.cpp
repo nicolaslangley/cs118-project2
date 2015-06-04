@@ -236,6 +236,16 @@ void Router::find_path(unsigned long dest, int dest_port)
             ss << "---------" << endl << endl;
             Router::thread_print(ss.str());
             // TODO: fix the port and address stuff
+            
+            // Adding initial message to cache table 
+            pair<unsigned long,unsigned long> incomingRequestKey = make_pair(req_message->originator_ip,req_message->destination_ip);
+            tableEntryCache originCacheEntry;
+            originCacheEntry.destination_ip = req_message->destination_ip;
+            originCacheEntry.source_ip = req_message->originator_ip;
+            originCacheEntry.sequence = req_message->originator_sequence_number;  //sequence number of source
+            originCacheEntry.hop_count = req_message->hop_count;
+
+            cache_table[incomingRequestKey]=originCacheEntry;
             // NOTE: it->first is the port value
             send_aodv(htonl(0x7f000001), it->first, req_message);
         }
